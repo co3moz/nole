@@ -1,6 +1,8 @@
 Mole
 ==========
 
+![](docs/mole.png)
+
 Mole is a testing platform just like mocha.. You can create test classes and declare specs with decorators..
 
 ```ts
@@ -40,7 +42,7 @@ Declaring the spec tag will notify the mole core and assigns the tasks for later
 
 ```ts
 // test/queue.test.ts
-import { Spec, Skip } from 'mole';
+import { Spec } from 'mole';
 
 class QueueTest {
   @Spec(10000)
@@ -50,6 +52,7 @@ class QueueTest {
 }
 ```
 
+> * All specs will be executed as creation order.
 > * Timing colors are defined by timeout value. If value smaller than (timeout / 5) output will be green. If value bigger than this but smaller than (timeout / 2.5); it will be yellow. In all other cases color will be red.
 
 
@@ -62,7 +65,7 @@ You can skip tests. (hooks will be disabled for this spec)
 import { Spec, Skip } from 'mole';
 
 class QueueTest {
-  @Skip()
+  @Skip("deprecated unit")
   @Spec()
   Push() {
     this.queue.push(10);
@@ -71,6 +74,11 @@ class QueueTest {
 ```
 
 > * Skipping the task make it yellow colored.
+
+```bash
+$ mole ./**/test/*.test.ts
+  (skip)              QueueTest.Push() {deprecated unit}
+```
 
 
 ## Dependencies
@@ -121,6 +129,8 @@ Hooks will help you to develop helper methods.
 import { Spec, Hook, HookType } from 'mole';
 
 class HookTest {
+  value!: number;
+
   @Hook(HookType.BeforeEach)
   async beforeEach() {
     this.value = Math.random();
@@ -137,18 +147,20 @@ class HookTest {
 
 > * Hooks can be async tasks.
 > * Hooks do have timeout, you can change it by second parameter.
-> * If you name hook same as hook type then; When it occurr an error, It will print "class:hookType" other wise "class.name:hoopType"
+> * If you name hook same as hook type then; When it occurr an error, It will print "class:hookType" otherwise "class.name:hoopType"
+> * Hooks cannot be spec
+> * Hooks cannot skipped
 
 ## Dynamic Tests
 
-Dynamic tests are not featured in but you can create another method and call it.
+Dynamic tests are not featured in but you can create another method and call it dynamicly.
 
 
 ```ts
 // test/dynamic.test.ts
 import { Spec } from 'mole';
 
-class QueueTest {
+class DynamicTest {
   @Spec()
   Some() {
     for(let i = 0; i < 10; i++) {
@@ -161,3 +173,8 @@ class QueueTest {
   }
 }
 ```
+
+## Assert
+
+We do not provide assert library. You can use chai or should.js.
+
