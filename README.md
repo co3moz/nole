@@ -1,7 +1,7 @@
+![](docs/mole.png)
+
 Mole
 ==========
-
-![](docs/mole.png)
 
 Mole is a testing platform just like mocha.. You can create test classes and declare specs with decorators..
 
