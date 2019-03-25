@@ -178,3 +178,15 @@ class DynamicTest {
 
 We do not provide assert library. You can use chai or should.js.
 
+## Compiled files
+
+You can run the compiled test files with `-T` option.
+
+```bash
+$ nole -T ./build/test/**/*.test.js
+  (ok)      0.09 ms QueueTest.CreateInstance()
+  (ok)      0.11 ms QueueTest.Push()
+  (ok)      1.09 ms QueueTest.Pipe()
+```
+
+> This will prevent to load ts-node register. It will be quite faster.

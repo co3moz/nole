@@ -11,33 +11,31 @@ const FAILED_TEXT = colors.bold(colors.red(' (failed) '));
 const HOOK_FAILED_TEXT = colors.bold(colors.red(' (hook failed) '));
 
 export function ManualRun() {
-  return new Promise((resolve, reject) => {
-    setTimeout(async function () {
-      try {
-        let hashMap = HashMap();
-        
-        while (hashMap.size) {
-          let test = PickNextTestFromHashMap(hashMap);
-          if (test) {
-            hashMap.delete(test.target);
-            CreateInstanceIfNotExists(test);
-            HandleDependencies(test);
+  return new Promise(async (resolve, reject) => {
+    try {
+      let hashMap = HashMap();
 
-            await HandleBeforeHooks(test);
-            await HandleSpecs(test);
-            await HandleAfterHooks(test);
+      while (hashMap.size) {
+        let test = PickNextTestFromHashMap(hashMap);
+        if (test) {
+          hashMap.delete(test.target);
+          CreateInstanceIfNotExists(test);
+          HandleDependencies(test);
 
-            test.isFinished = true;
-          } else {
-            DependencyLock(hashMap);
-          }
+          await HandleBeforeHooks(test);
+          await HandleSpecs(test);
+          await HandleAfterHooks(test);
+
+          test.isFinished = true;
+        } else {
+          DependencyLock(hashMap);
         }
-
-        resolve();
-      } catch (e) {
-        reject(e);
       }
-    }, 1);
+
+      resolve();
+    } catch (e) {
+      reject(e);
+    }
   });
 }
 

@@ -50,13 +50,11 @@ if (!program.args.length) {
 
     console.log('Nole tests v' + package.version);
     ManualRun().then(() => {
-      setTimeout(function () {
-        console.log(' loading: %s', TimeResolve(file))
-        console.log(' compile: %s', TimeResolve(prop - file))
-        console.log('   tests: %s', TimeResolve(time.end() - prop))
-        // console.log('file: %s, compile: %s, tests: %s', TimeResolve(file), TimeResolve(prop), TimeResolve(time.end()))
-        process.exit(0);
-      }, 10);
+      console.log(' discover: %s', TimeResolve(file))
+      console.log('  resolve: %s', TimeResolve(prop - file))
+      console.log('    tests: %s', TimeResolve(time.end() - prop))
+      // console.log('file: %s, compile: %s, tests: %s', TimeResolve(file), TimeResolve(prop), TimeResolve(time.end()))
+      process.exit(0);
     }).catch(e => {
       process.exit(1);
     })
