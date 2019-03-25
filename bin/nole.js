@@ -30,7 +30,13 @@ if (!program.args.length) {
       resolve(matches);
     })
   }))).then(list => {
-    if (!list.length) {
+    let fileList = [];
+
+    for (let item of list) {
+      while (item.length) fileList.push(path.resolve(process.cwd(), item.pop()));
+    }
+
+    if (!fileList.length) {
       failed('0 files found');
       process.exit(1);
     }
@@ -41,12 +47,9 @@ if (!program.args.length) {
       require('ts-node').register();
     }
 
-    for (let item of list) {
-      while (item.length) {
-        require(path.resolve(process.cwd(), item.pop()));
-      }
+    for (let file of fileList) {
+      require(file);
     }
-
 
     let prop = time.end();
 
