@@ -15,6 +15,11 @@ export function ManualRun() {
     try {
       let hashMap = HashMap();
 
+      if (!hashMap.size) {
+        console.log(`${FAILED_TEXT} no specs found`);
+        throw new Error('No specs found');
+      }
+
       while (hashMap.size) {
         let test = PickNextTestFromHashMap(hashMap);
         if (test) {

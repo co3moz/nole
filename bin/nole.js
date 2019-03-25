@@ -42,7 +42,9 @@ if (!program.args.length) {
     }
 
     for (let item of list) {
-      while (item.length) require(path.resolve(process.cwd(), item.pop()));
+      while (item.length) {
+        require(path.resolve(process.cwd(), item.pop()));
+      }
     }
 
 
@@ -60,7 +62,7 @@ if (!program.args.length) {
     })
   }).catch(e => {
     failed('Error occurred on resolving files');
-    console.error(e);
+    console.error(e.stack || e);
     process.exit(1);
   })
 }
