@@ -52,8 +52,8 @@ if (!program.args.length) {
     ManualRun().then(() => {
       setTimeout(function () {
         console.log(' loading: %s', TimeResolve(file))
-        console.log(' compile: %s', TimeResolve(prop))
-        console.log('   tests: %s', TimeResolve(time.end()))
+        console.log(' compile: %s', TimeResolve(prop - file))
+        console.log('   tests: %s', TimeResolve(time.end() - prop))
         // console.log('file: %s, compile: %s, tests: %s', TimeResolve(file), TimeResolve(prop), TimeResolve(time.end()))
         process.exit(0);
       }, 10);
