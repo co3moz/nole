@@ -6,7 +6,7 @@ export function TimeFactor(diff: number, timeout: number) {
   return colors.red(TimeResolve(diff).padStart(9, ' '));
 }
 
-function TimeResolve(ms: number) {
+export function TimeResolve(ms: number) {
   if (ms < 1000) return (ms * 100 | 0) / 100 + ' ms';
   if (ms < 60 * 1000) return (ms / 10 | 0) / 100 + ' s';
   if (ms < 60 * 60 * 1000) return (ms / 600 | 0) / 100 + ' m';

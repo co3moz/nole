@@ -1,2 +1,3 @@
-export { Dependency, Spec } from './decorators';
-export { ManualRun } from './run';
+
+export { Dependency, Spec, Hook, Skip } from './decorators';
+export { HookType } from './test';

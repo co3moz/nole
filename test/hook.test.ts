@@ -1,8 +1,5 @@
 import * as assert from 'assert';
-import { Spec, Dependency } from "../src";
-import { ManualRun } from "../src/run";
-import { Hook, Skip } from "../src/decorators";
-import { HookType } from "../src/test";
+import { Spec, Hook, Skip, HookType } from "../src";
 
 class BasicTest {
   array: any[] = [1, 2, 3];
@@ -28,9 +25,3 @@ class BasicTest {
     assert.equal(this.array.pop(), 4);
   }
 }
-
-ManualRun().catch(x => {
-  process.exit(1);
-});
-
-

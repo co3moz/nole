@@ -14,10 +14,12 @@ export function ManualRun() {
   return new Promise((resolve, reject) => {
     setTimeout(async function () {
       try {
-        while (HashMap.size) {
-          let test = PickNextTestFromHashMap();
+        let hashMap = HashMap();
+        
+        while (hashMap.size) {
+          let test = PickNextTestFromHashMap(hashMap);
           if (test) {
-            HashMap.delete(test.target);
+            hashMap.delete(test.target);
             CreateInstanceIfNotExists(test);
             HandleDependencies(test);
 
@@ -27,7 +29,7 @@ export function ManualRun() {
 
             test.isFinished = true;
           } else {
-            DependencyLock();
+            DependencyLock(hashMap);
           }
         }
 
@@ -39,12 +41,12 @@ export function ManualRun() {
   });
 }
 
-function PickNextTestFromHashMap() {
-  for (let bigaTest of HashMap.values()) {
-    if (bigaTest.isFinished) continue;
-    if (!bigaTest.dependencies.every(x => x.dependency.isFinished)) continue;
+function PickNextTestFromHashMap(hashMap: Map<any, Test>) {
+  for (let test of hashMap.values()) {
+    if (test.isFinished) continue;
+    if (!test.dependencies.every(x => x.dependency.isFinished)) continue;
 
-    return bigaTest;
+    return test;
   }
 }
 
@@ -157,13 +159,13 @@ async function HandleAfterHooks(test: Test) {
   }
 }
 
-function DependencyLock() {
+function DependencyLock(hashMap: Map<any, Test>) {
   console.error(FAILED_TEXT + colors.red('Looks like there is confict issue for dependency resolving!'));
 
   console.error('Possible conflicts;');
-  for (let bigaTest of HashMap.values()) {
+  for (let test of hashMap.values()) {
 
-    console.error(`- class ${bigaTest.name} { ${bigaTest.dependencies.filter(x => !x.dependency.isFinished).map(x => `@Dependency(${x.dependency.name}) ${x.propertyKey}`).join(', ')} }`);
+    console.error(`- class ${test.name} { ${test.dependencies.filter(x => !x.dependency.isFinished).map(x => `@Dependency(${x.dependency.name}) ${x.propertyKey}`).join(', ')} }`);
   }
 
   throw new Error('Dependency lock occurred!');

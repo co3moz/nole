@@ -49,9 +49,9 @@ export function Skip(reason?: string): MethodDecorator {
 
 
 function GetTestInstanceOfTarget(target: any) {
-  let instance = HashMap.get(target);
+  let instance = HashMap().get(target);
   if (!instance) {
-    HashMap.set(target, instance = new Test(target));
+    HashMap().set(target, instance = new Test(target));
   }
   return instance;
 }
