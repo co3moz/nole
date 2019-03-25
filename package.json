@@ -1,11 +1,11 @@
 {
   "name": "nole",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Testing Library for Typescript projects",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "nole": "./bin/nole"
+    "nole": "./bin/nole.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
