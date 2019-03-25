@@ -1,6 +1,6 @@
 import { Test } from "./test";
 
-const KEY = '_mole_hash';
+const KEY = '_nole_hash';
 
 export function HashMap(): Map<any, Test> {
   let g: any = global || {};

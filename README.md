@@ -1,13 +1,13 @@
-![](docs/mole.png)
+![](docs/nole.png)
 
-Mole
+Nole
 ==========
 
-Mole is a testing platform just like mocha.. You can create test classes and declare specs with decorators..
+Nole is a testing platform just like mocha.. You can create test classes and declare specs with decorators..
 
 ```ts
 // test/queue.test.ts
-import { Spec } from 'mole';
+import { Spec } from 'nole';
 
 class QueueTest {
   queue!: Queue;
@@ -30,7 +30,7 @@ class QueueTest {
 ```
 
 ```bash
-$ mole ./**/test/*.test.ts
+$ nole ./test/**/*.test.ts
   (ok)      0.09 ms QueueTest.CreateInstance()
   (ok)      0.11 ms QueueTest.Push()
   (ok)      1.09 ms QueueTest.Pipe()
@@ -38,11 +38,11 @@ $ mole ./**/test/*.test.ts
 
 ## Spec
 
-Declaring the spec tag will notify the mole core and assigns the tasks for later use. You can also specify timeout. Default timeout is 5000 ms.
+Declaring the spec tag will notify the nole core and assigns the tasks for later use. You can also specify timeout. Default timeout is 5000 ms.
 
 ```ts
 // test/queue.test.ts
-import { Spec } from 'mole';
+import { Spec } from 'nole';
 
 class QueueTest {
   @Spec(10000)
@@ -62,7 +62,7 @@ You can skip tests. (hooks will be disabled for this spec)
 
 ```ts
 // test/queue.test.ts
-import { Spec, Skip } from 'mole';
+import { Spec, Skip } from 'nole';
 
 class QueueTest {
   @Skip("deprecated unit")
@@ -76,7 +76,7 @@ class QueueTest {
 > * Skipping the task make it yellow colored.
 
 ```bash
-$ mole ./**/test/*.test.ts
+$ nole ./**/test/*.test.ts
   (skip)              QueueTest.Push() {deprecated unit}
 ```
 
@@ -87,7 +87,7 @@ You can include other tests and wait them to complete.
 
 ```ts
 // test/database.test.ts
-import { Spec } from 'mole';
+import { Spec } from 'nole';
 
 export class Database {
   connection!: any;
@@ -103,7 +103,7 @@ export class Database {
 
 ```ts
 // test/other.test.ts
-import { Spec, Dependency } from 'mole';
+import { Spec, Dependency } from 'nole';
 import { Database } from './database.test';
 
 class Other {
@@ -126,7 +126,7 @@ Hooks will help you to develop helper methods.
 
 ```ts
 // test/hook.test.ts
-import { Spec, Hook, HookType } from 'mole';
+import { Spec, Hook, HookType } from 'nole';
 
 class HookTest {
   value!: number;
@@ -158,7 +158,7 @@ Dynamic tests are not featured in but you can create another method and call it 
 
 ```ts
 // test/dynamic.test.ts
-import { Spec } from 'mole';
+import { Spec } from 'nole';
 
 class DynamicTest {
   @Spec()

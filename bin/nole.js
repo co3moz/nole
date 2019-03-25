@@ -48,7 +48,7 @@ if (!program.args.length) {
 
     let prop = time.end();
 
-    console.log('Mole tests v' + package.version);
+    console.log('Nole tests v' + package.version);
     ManualRun().then(() => {
       setTimeout(function () {
         console.log(' loading: %s', TimeResolve(file))
