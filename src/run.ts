@@ -73,7 +73,7 @@ async function HandleBeforeHooks(test: Test) {
       let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'before' ? `.${propertyKey}:before` : ':before')));
 
       console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
-      console.error(e);
+      console.error(e.stack || e);
       throw e;
     }
   }
@@ -89,7 +89,7 @@ async function HandleBeforeEachHooks(test: Test) {
       let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'beforeEach' ? `.${propertyKey}:beforeEach` : ':beforeEach')));
 
       console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
-      console.error(e);
+      console.error(e.stack || e);
       throw e;
     }
   }
@@ -105,7 +105,7 @@ async function HandleAfterEachHooks(test: Test) {
       let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'afterEach' ? `.${propertyKey}:afterEach` : ':afterEach')));
 
       console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
-      console.error(e);
+      console.error(e.stack || e);
       throw e;
     }
   }
@@ -135,7 +135,7 @@ async function HandleSpecs(test: Test) {
       let timeText = TimeFactor(start.end(), spec.timeout);
 
       console.error(`${FAILED_TEXT} ${timeText} ${testName}()`);
-      console.error(e);
+      console.error(e.stack || e);
       throw e;
     }
 
@@ -153,7 +153,7 @@ async function HandleAfterHooks(test: Test) {
       let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'after' ? `.${propertyKey}:after` : ':after')));
 
       console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
-      console.error(e);
+      console.error(e.stack || e);
       throw e;
     }
   }
