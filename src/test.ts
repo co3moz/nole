@@ -37,8 +37,7 @@ export enum HookType {
   Before, // Trigger when test case is ready to handle
   After, // Trigger when test case did all the specs
   BeforeEach, // Trigger before each spec
-  AfterEach, // Trigger after each spec
-  End // Trigger when all dependencies completed their specs.
+  AfterEach // Trigger after each spec
 }
 
 export interface ClassDefition<T> { new(): T; }

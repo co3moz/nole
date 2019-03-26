@@ -12,6 +12,7 @@ const { TimeResolve } = require('../dist/utils/time_factor');
 program
   .usage('<glob> ...')
   .option('-T, --no-typescript', 'disable ts-node register')
+  .option('-L, --no-log', 'disable console.log')
   .version(package.version)
   .parse(process.argv);
 
@@ -20,6 +21,11 @@ if (!program.args.length) {
   program.help()
 } else {
   let time = TimeDifference.begin();
+
+  let log = console.log.bind(console);
+  if (!program.log) {
+    console.log = function () { }
+  }
 
   Promise.all(program.args.map(arg => new Promise((resolve, reject) => {
     glob(arg, (err, matches) => {
@@ -53,12 +59,11 @@ if (!program.args.length) {
 
     let prop = time.end();
 
-    console.log('Nole tests v' + package.version);
-    ManualRun().then(() => {
-      console.log(' discover: %s', TimeResolve(file))
-      console.log('  resolve: %s', TimeResolve(prop - file))
-      console.log('    tests: %s', TimeResolve(time.end() - prop))
-      // console.log('file: %s, compile: %s, tests: %s', TimeResolve(file), TimeResolve(prop), TimeResolve(time.end()))
+    log('Nole tests v' + package.version);
+    ManualRun(log).then(() => {
+      log(' discover: %s', TimeResolve(file))
+      log('  resolve: %s', TimeResolve(prop - file))
+      log('    tests: %s', TimeResolve(time.end() - prop))
       process.exit(0);
     }).catch(e => {
       process.exit(1);

@@ -10,25 +10,30 @@ const SKIP_TEXT = colors.bold(colors.yellow('  (skip)  '));
 const FAILED_TEXT = colors.bold(colors.red(' (failed) '));
 const HOOK_FAILED_TEXT = colors.bold(colors.red(' (hook failed) '));
 
-export function ManualRun() {
+export function ManualRun(log: Function) {
+  if (!log) {
+    log = console.log.bind(console);
+  }
+
   return new Promise(async (resolve, reject) => {
     try {
-      let hashMap = HashMap();
+      let hashMap = new Map(HashMap());
 
       if (!hashMap.size) {
-        console.log(`${FAILED_TEXT} no specs found`);
+        log(`${FAILED_TEXT} no specs found`);
         throw new Error('No specs found');
       }
 
       while (hashMap.size) {
         let test = PickNextTestFromHashMap(hashMap);
+
         if (test) {
           hashMap.delete(test.target);
           CreateInstanceIfNotExists(test);
           HandleDependencies(test);
 
           await HandleBeforeHooks(test);
-          await HandleSpecs(test);
+          await HandleSpecs(test, log);
           await HandleAfterHooks(test);
 
           test.isFinished = true;
@@ -114,13 +119,13 @@ async function HandleAfterEachHooks(test: Test) {
   }
 }
 
-async function HandleSpecs(test: Test) {
+async function HandleSpecs(test: Test, log: Function) {
   for (let [propertyKey, spec] of test.specs.entries()) {
     let testName = colors.bold(colors.yellow(test.name + '.' + propertyKey));
 
     if (test.skip.has(propertyKey)) {
       let reason = test.skip.get(propertyKey)!.reason;
-      console.log(`${SKIP_TEXT} ${' '.repeat(9)} ${testName}() ${reason ? '{' + reason + '}' : ''}`);
+      log(`${SKIP_TEXT} ${' '.repeat(9)} ${testName}() ${reason ? '{' + reason + '}' : ''}`);
       continue;
     }
 
@@ -133,7 +138,7 @@ async function HandleSpecs(test: Test) {
 
       let timeText = TimeFactor(start.end(), spec.timeout);
 
-      console.log(`${OK_TEXT} ${timeText} ${testName}()`);
+      log(`${OK_TEXT} ${timeText} ${testName}()`);
     } catch (e) {
       let timeText = TimeFactor(start.end(), spec.timeout);
 
