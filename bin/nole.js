@@ -23,6 +23,7 @@ if (!program.args.length) {
   let time = TimeDifference.begin();
 
   let log = console.log.bind(console);
+  
   if (!program.log) {
     console.log = function () { }
   }

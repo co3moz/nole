@@ -1,6 +1,6 @@
 import { Spec, Dependency } from "../src";
 
-class BasicTest {
+export class BasicTest {
   variable = 1;
 
   @Spec()
@@ -9,10 +9,12 @@ class BasicTest {
   }
 }
 
-class DependencyTest {
+export class DependencyTest {
   @Dependency(BasicTest)
   basicTest!: BasicTest;
 
-  @Spec() async check() { }
+  @Spec() async check() {
+    if (this.basicTest.variable !== 1) throw new Error('Dependency test failed!');
+  }
 }
 

@@ -65,7 +65,7 @@ You can skip tests. (hooks will be disabled for this spec)
 import { Spec, Skip } from 'nole';
 
 class QueueTest {
-  @Skip("deprecated unit")
+  @Skip('deprecated unit')
   @Spec()
   Push() {
     this.queue.push(10);
@@ -78,6 +78,32 @@ class QueueTest {
 ```bash
 $ nole ./**/test/*.test.ts
   (skip)              QueueTest.Push() {deprecated unit}
+```
+
+## SkipClass
+
+You can skip whole test classes. It's equivalent of spec skipping, but you don't have to select one by one. 
+**Kindly reminder**: Dependents might require this test class and props. 
+
+```ts
+// test/queue-skip-class.test.ts
+import { Spec, Skip, SkipClass } from 'nole';
+
+@SkipClass('No need anymore')
+class QueueTest {
+  @Spec()
+  Push() { }
+
+  @Skip('deprecated unit')
+  @Spec()
+  PushButSomehowDifferent() { }
+}
+```
+
+```bash
+$ nole ./**/test/*.test.ts
+  (skip)              QueueTest.Push() {No need anymore}
+  (skip)              QueueTest.PushButSomehowDifferent() {deprecated unit}
 ```
 
 
@@ -163,7 +189,7 @@ import { Spec } from 'nole';
 class DynamicTest {
   @Spec()
   Some() {
-    for(let i = 0; i < 10; i++) {
+    for (let i = 0; i < 10; i++) {
       this.single(i);
     }
   }
@@ -173,6 +199,58 @@ class DynamicTest {
   }
 }
 ```
+
+## Dependency hook
+
+After end of the test tree, special hook will be called. Nole will follow execution order to run; first executed spec's "EndOfTree" hook will be called last.
+
+
+```ts
+// test/database-with-cleanup.test.ts
+import { Spec, HookType, Hook } from 'nole';
+
+export class DatabaseWithCleanup {
+  connection!: any;
+
+  @Spec() 
+  async Connect() {
+    connection = new Connection('...');
+
+    await connection.connect();
+  }
+
+  @Hook(HookType.EndOfTree)
+  async cleanUp() {
+    this.connection.close();
+    console.log('Connection closed!');
+  }
+}
+```
+
+```ts
+// test/other.test.ts
+import { Spec, Dependency } from 'nole';
+import { Database } from './database.test';
+
+class Other {
+  @Dependency(DatabaseWithCleanup)
+  database!: DatabaseWithCleanup;
+
+  @Spec() 
+  async DoThings() {
+    await database.connection.doStuff();
+  }
+}
+```
+
+```bash
+$ nole ./test/**/*.test.ts
+  (ok)      0.09 ms DatabaseWithCleanup.Connect()
+  (ok)      0.11 ms Other.DoThings()
+Connection closed!
+```
+
+
 
 ## Assert
 

@@ -45,6 +45,16 @@ export function Skip(reason?: string): MethodDecorator {
   }
 }
 
+/**
+ * Assigns test spec as skipped
+ * @param reason Why skipped
+ */
+export function SkipClass(reason?: string): ClassDecorator {
+  return function (target) {
+    DeclareAsSkippedClass(target, reason ? reason : '');
+  }
+}
+
 
 
 
@@ -57,17 +67,18 @@ function GetTestInstanceOfTarget(target: any) {
 }
 
 
-function DeclareDependencyForTestClass<T>(protoOfTarget: T, propertyKey: string, dependency: any) {
+function DeclareDependencyForTestClass(protoOfTarget: any, propertyKey: string, dependency: any) {
   let target = protoOfTarget.constructor;
 
   let test = GetTestInstanceOfTarget(target);
   let depTest = GetTestInstanceOfTarget(dependency);
 
   test.dependencies.push({ propertyKey, dependency: depTest });
+  depTest.dependents.push(test);
 }
 
 
-function DeclareSpecForTestClass<T>(protoOfTarget: T, propertyKey: string, timeout: number) {
+function DeclareSpecForTestClass(protoOfTarget: any, propertyKey: string, timeout: number) {
   let target = protoOfTarget.constructor;
   let test = GetTestInstanceOfTarget(target);
 
@@ -82,7 +93,7 @@ function DeclareSpecForTestClass<T>(protoOfTarget: T, propertyKey: string, timeo
   test.specs.set(propertyKey, { timeout });
 }
 
-function DeclareHookForTestClass<T>(protoOfTarget: T, propertyKey: string, hookType: HookType, timeout: number) {
+function DeclareHookForTestClass(protoOfTarget: any, propertyKey: string, hookType: HookType, timeout: number) {
   let target = protoOfTarget.constructor;
   let test = GetTestInstanceOfTarget(target);
 
@@ -97,7 +108,7 @@ function DeclareHookForTestClass<T>(protoOfTarget: T, propertyKey: string, hookT
   test.hooks.set(propertyKey, { type: hookType, timeout });
 }
 
-function DeclareAsSkipped<T>(protoOfTarget: T, propertyKey: string, reason: string) {
+function DeclareAsSkipped(protoOfTarget: any, propertyKey: string, reason: string) {
   let target = protoOfTarget.constructor;
   let test = GetTestInstanceOfTarget(target);
 
@@ -110,4 +121,11 @@ function DeclareAsSkipped<T>(protoOfTarget: T, propertyKey: string, reason: stri
   } else {
     test.skip.set(propertyKey, { reason });
   }
+}
+
+
+function DeclareAsSkippedClass(target: any, reason: string) {
+  let test = GetTestInstanceOfTarget(target);
+
+  test.skipClass = { reason };
 }

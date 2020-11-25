@@ -1,3 +1,3 @@
 
-export { Dependency, Spec, Hook, Skip } from './decorators';
+export { Dependency, Spec, Hook, Skip, SkipClass } from './decorators';
 export { HookType } from './test';

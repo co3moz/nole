@@ -36,6 +36,10 @@ export function ManualRun(log: Function) {
           await HandleSpecs(test, log);
           await HandleAfterHooks(test);
 
+          if (test.dependents.length == 0) {
+            await HandleEndOfTree(test);
+          }
+
           test.isFinished = true;
         } else {
           DependencyLock(hashMap);
@@ -123,8 +127,9 @@ async function HandleSpecs(test: Test, log: Function) {
   for (let [propertyKey, spec] of test.specs.entries()) {
     let testName = colors.bold(colors.yellow(test.name + '.' + propertyKey));
 
-    if (test.skip.has(propertyKey)) {
-      let reason = test.skip.get(propertyKey)!.reason;
+    const shouldPropertySkip = test.skip.has(propertyKey);
+    if (shouldPropertySkip || test.skipClass) {
+      let reason = shouldPropertySkip ? test.skip.get(propertyKey)!.reason : test.skipClass!.reason;
       log(`${SKIP_TEXT} ${' '.repeat(9)} ${testName}() ${reason ? '{' + reason + '}' : ''}`);
       continue;
     }
@@ -164,6 +169,30 @@ async function HandleAfterHooks(test: Test) {
       console.error(e.stack || e);
       throw e;
     }
+  }
+}
+
+
+async function HandleEndOfTree(test: Test) {
+  if (test.endOfTreeCalled) return;
+  test.endOfTreeCalled = true;
+
+  for (let [propertyKey, hook] of test.hooks.entries()) {
+    if (hook.type != HookType.EndOfTree) continue;
+    try {
+      await Executor(test.testInstance[propertyKey].bind(test.testInstance), hook.timeout);
+
+    } catch (e) {
+      let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'after' ? `.${propertyKey}:after` : ':after')));
+
+      console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
+      console.error(e.stack || e);
+      throw e;
+    }
+  }
+
+  for (let tree of test.dependencies) {
+    HandleEndOfTree(tree.dependency);
   }
 }
 
