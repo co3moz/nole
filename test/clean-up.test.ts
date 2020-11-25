@@ -1,6 +1,6 @@
 import { Spec, Dependency, Hook, HookType } from "../src";
 
-export class EndOfTreeLayer1Test {
+export class CleanUpLayer1Test {
   data: any;
 
   @Spec()
@@ -8,7 +8,7 @@ export class EndOfTreeLayer1Test {
     this.data = { somethingImportant: 1 };
   }
 
-  @Hook(HookType.EndOfTree)
+  @Hook(HookType.CleanUp)
   async cleanUp() {
     this.data = null;
     console.log('layer 1 clean up completed!');
@@ -16,10 +16,10 @@ export class EndOfTreeLayer1Test {
 }
 
 
-export class EndOfTreeLayer2Test {
+export class CleanUpLayer2Test {
   data: any;
 
-  @Dependency(EndOfTreeLayer1Test)
+  @Dependency(CleanUpLayer1Test)
   previousLayer!: any;
 
   @Spec()
@@ -27,7 +27,7 @@ export class EndOfTreeLayer2Test {
     this.data = { somethingImportant: 1 };
   }
 
-  @Hook(HookType.EndOfTree)
+  @Hook(HookType.CleanUp)
   async cleanUp() {
     this.data = null;
     console.log('layer 2 clean up completed!');
@@ -35,10 +35,10 @@ export class EndOfTreeLayer2Test {
 }
 
 
-export class EndOfTreeLayer3Test {
+export class CleanUpLayer3Test {
   data: any;
 
-  @Dependency(EndOfTreeLayer2Test)
+  @Dependency(CleanUpLayer2Test)
   previousLayer!: any;
 
   @Spec()
@@ -46,7 +46,7 @@ export class EndOfTreeLayer3Test {
     this.data = { somethingImportant: 1 };
   }
 
-  @Hook(HookType.EndOfTree)
+  @Hook(HookType.CleanUp)
   async cleanUp() {
     this.data = null;
     console.log('layer 3 clean up completed!');

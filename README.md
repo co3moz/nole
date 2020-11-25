@@ -202,7 +202,7 @@ class DynamicTest {
 
 ## Dependency hook
 
-After end of the test tree, special hook will be called. Nole will follow execution order to run; first executed spec's "EndOfTree" hook will be called last.
+After end of the test tree, special hook will be called. Nole will follow execution order to run; first executed spec's "CleanUp" hook will be called last.
 
 
 ```ts
@@ -219,7 +219,7 @@ export class DatabaseWithCleanup {
     await connection.connect();
   }
 
-  @Hook(HookType.EndOfTree)
+  @Hook(HookType.CleanUp)
   async cleanUp() {
     this.connection.close();
     console.log('Connection closed!');

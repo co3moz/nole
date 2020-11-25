@@ -24,7 +24,7 @@ export class Test {
   specs = new Map<string, ISpec>();
   hooks = new Map<string, IHook>();
   isFinished: boolean;
-  endOfTreeCalled: boolean = false;
+  cleanUpCalled: boolean = false;
   testInstance: any;
 
   constructor(public target: any) {
@@ -41,7 +41,7 @@ export enum HookType {
   After, // Trigger when test case did all the specs
   BeforeEach, // Trigger before each spec
   AfterEach, // Trigger after each spec
-  EndOfTree // Trigger after all dependents tested (You can safely remove connections etc.)
+  CleanUp // Trigger after all dependents tested (You can safely remove connections etc.)
 }
 
 export interface ClassDefition<T> { new(): T; }

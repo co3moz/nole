@@ -37,7 +37,7 @@ export function ManualRun(log: Function) {
           await HandleAfterHooks(test);
 
           if (test.dependents.length == 0) {
-            await HandleEndOfTree(test);
+            await HandleCleanUp(test);
           }
 
           test.isFinished = true;
@@ -173,17 +173,17 @@ async function HandleAfterHooks(test: Test) {
 }
 
 
-async function HandleEndOfTree(test: Test) {
-  if (test.endOfTreeCalled) return;
-  test.endOfTreeCalled = true;
+async function HandleCleanUp(test: Test) {
+  if (test.cleanUpCalled) return;
+  test.cleanUpCalled = true;
 
   for (let [propertyKey, hook] of test.hooks.entries()) {
-    if (hook.type != HookType.EndOfTree) continue;
+    if (hook.type != HookType.CleanUp) continue;
     try {
       await Executor(test.testInstance[propertyKey].bind(test.testInstance), hook.timeout);
 
     } catch (e) {
-      let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'after' ? `.${propertyKey}:after` : ':after')));
+      let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'cleanUp' ? `.${propertyKey}:cleanUp` : ':cleanUp')));
 
       console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
       console.error(e.stack || e);
@@ -192,7 +192,7 @@ async function HandleEndOfTree(test: Test) {
   }
 
   for (let tree of test.dependencies) {
-    HandleEndOfTree(tree.dependency);
+    HandleCleanUp(tree.dependency);
   }
 }
 
