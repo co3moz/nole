@@ -15,7 +15,7 @@ export function ManualRun(log: Function) {
     log = console.log.bind(console);
   }
 
-  return new Promise(async (resolve, reject) => {
+  return new Promise<void>(async (resolve, reject) => {
     try {
       let hashMap = new Map(HashMap());
 
@@ -175,6 +175,8 @@ async function HandleAfterHooks(test: Test) {
 
 async function HandleCleanUp(test: Test) {
   if (test.cleanUpCalled) return;
+  if (!test.dependents.every(dependent => dependent.isFinished)) return;
+  
   test.cleanUpCalled = true;
 
   for (let [propertyKey, hook] of test.hooks.entries()) {
