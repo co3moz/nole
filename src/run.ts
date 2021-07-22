@@ -7,6 +7,7 @@ import { HookType, Test } from "./test";
 
 const OK_TEXT = colors.bold(colors.green('   (ok)   '));
 const SKIP_TEXT = colors.bold(colors.yellow('  (skip)  '));
+const DYNAMIC_SKIP_TEXT = colors.bold(colors.blue(' (dskip)   '));
 const FAILED_TEXT = colors.bold(colors.red(' (failed) '));
 const HOOK_FAILED_TEXT = colors.bold(colors.red(' (hook failed) '));
 
@@ -85,7 +86,7 @@ async function HandleBeforeHooks(test: Test) {
       let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'before' ? `.${propertyKey}:before` : ':before')));
 
       console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
-      console.error(e.stack || e);
+      console.error(e?.stack ?? e);
       throw e;
     }
   }
@@ -101,7 +102,7 @@ async function HandleBeforeEachHooks(test: Test) {
       let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'beforeEach' ? `.${propertyKey}:beforeEach` : ':beforeEach')));
 
       console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
-      console.error(e.stack || e);
+      console.error(e?.stack ?? e);
       throw e;
     }
   }
@@ -117,7 +118,7 @@ async function HandleAfterEachHooks(test: Test) {
       let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'afterEach' ? `.${propertyKey}:afterEach` : ':afterEach')));
 
       console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
-      console.error(e.stack || e);
+      console.error(e?.stack ?? e);
       throw e;
     }
   }
@@ -145,10 +146,16 @@ async function HandleSpecs(test: Test, log: Function) {
 
       log(`${OK_TEXT} ${timeText} ${testName}()`);
     } catch (e) {
+      if (e?._nole_anchor) {
+        let reason = e.reason;
+        log(`${DYNAMIC_SKIP_TEXT} ${' '.repeat(8)} ${testName}() ${reason ? '{' + reason + '}' : ''}`);
+        continue;
+      }
+
       let timeText = TimeFactor(start.end(), spec.timeout);
 
       console.error(`${FAILED_TEXT} ${timeText} ${testName}()`);
-      console.error(e.stack || e);
+      console.error(e?.stack ?? e);
       throw e;
     }
 
@@ -166,7 +173,7 @@ async function HandleAfterHooks(test: Test) {
       let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'after' ? `.${propertyKey}:after` : ':after')));
 
       console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
-      console.error(e.stack || e);
+      console.error(e?.stack ?? e);
       throw e;
     }
   }
@@ -176,7 +183,7 @@ async function HandleAfterHooks(test: Test) {
 async function HandleCleanUp(test: Test) {
   if (test.cleanUpCalled) return;
   if (!test.dependents.every(dependent => dependent.isFinished)) return;
-  
+
   test.cleanUpCalled = true;
 
   for (let [propertyKey, hook] of test.hooks.entries()) {
@@ -188,7 +195,7 @@ async function HandleCleanUp(test: Test) {
       let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'cleanUp' ? `.${propertyKey}:cleanUp` : ':cleanUp')));
 
       console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
-      console.error(e.stack || e);
+      console.error(e?.stack ?? e);
       throw e;
     }
   }

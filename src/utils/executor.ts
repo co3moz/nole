@@ -1,4 +1,4 @@
-export function Executor(fn: Function, timeout: number) {
+export function Executor(fn: Function, timeout: number): Promise<void> {
   return new Promise(async (resolve, reject) => {
     let _timeout = null;
 
