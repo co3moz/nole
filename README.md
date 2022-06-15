@@ -5,6 +5,10 @@ Nole
 
 Nole is a testing platform just like mocha.. You can create test classes and declare specs with decorators..
 
+> Use nole 2.x for ESM and Typescript.
+
+> Use nole 1.x for CommonJS. (ability to disable Typescript with -T option)
+
 ```ts
 // test/queue.test.ts
 import { Spec } from 'nole';
@@ -257,6 +261,8 @@ Connection closed!
 We do not provide assert library. You can use chai or should.js.
 
 ## Compiled files
+
+> Deprecated (v2.x+), It will always use ts-node/esm module
 
 You can run the compiled test files with `-T` option.
 
