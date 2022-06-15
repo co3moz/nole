@@ -1,6 +1,6 @@
 import * as assert from 'assert';
-import { Spec, Skip } from "../src";
-import { SkipClass } from '../src/decorators';
+import { Spec, Skip } from "../src/index.js";
+import { SkipClass } from '../src/decorators.js';
 
 @SkipClass('skip all class')
 export class SkipAllTest {

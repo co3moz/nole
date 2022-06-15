@@ -1,4 +1,4 @@
-import { skipTest, Spec } from "../src";
+import { skipTest, Spec } from "../src/index.js";
 
 export class DynamicSkipTest {
   @Spec()

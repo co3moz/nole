@@ -1,4 +1,4 @@
-import { Spec, Dependency, Hook, HookType } from "../src";
+import { Spec, Dependency, Hook, HookType } from "../src/index.js";
 
 export class CleanUpLayer1Test {
   data: any;

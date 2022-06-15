@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "target": "es2017",
-    "module": "commonjs",
+    "target": "es2020",
+    "module": "ES2020",
     "lib": [
-      "es2017",
+      "es2020",
       "esnext"
     ],
     "declaration": true,
@@ -11,7 +11,6 @@
     "sourceMap": true,
     "outDir": "dist",
     "removeComments": true,
-    "strict": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },

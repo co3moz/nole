@@ -1,5 +1,5 @@
-import { HashMap } from "./data";
-import { Test, HookType, ClassDefition } from "./test";
+import { HashMap } from "./data.js";
+import { Test, HookType, ClassDefition } from "./test.js";
 
 /**
  * Assignes method as test case

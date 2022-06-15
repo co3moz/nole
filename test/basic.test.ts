@@ -1,4 +1,4 @@
-import { Spec, Dependency } from "../src";
+import { Spec, Dependency } from "../src/index.js";
 
 export class BasicTest {
   variable = 1;

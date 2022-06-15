@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { Spec, Hook, Skip, HookType } from "../src";
+import { Spec, Hook, Skip, HookType } from "../src/index.js";
 
 export class BasicTest {
   array: any[] = [1, 2, 3];

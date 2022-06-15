@@ -1,9 +1,11 @@
-import { HashMap } from "./data";
-import { TimeDifference } from "./utils/time_difference";
-import { TimeFactor } from "./utils/time_factor";
-import * as colors from 'colors/safe';
-import { Executor } from "./utils/executor";
-import { HookType, Test } from "./test";
+import { HashMap } from "./data.js";
+import { TimeDifference } from "./utils/time_difference.js";
+import { TimeFactor } from "./utils/time_factor.js";
+import * as clrs from 'colors/safe.js';
+import { Executor } from "./utils/executor.js";
+import { HookType, Test } from "./test.js";
+
+const colors = (clrs as any).default;
 
 const OK_TEXT = colors.bold(colors.green('   (ok)   '));
 const SKIP_TEXT = colors.bold(colors.yellow('  (skip)  '));
@@ -86,7 +88,7 @@ async function HandleBeforeHooks(test: Test) {
       let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'before' ? `.${propertyKey}:before` : ':before')));
 
       console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
-      console.error(e?.stack ?? e);
+      console.error((e as any)?.stack ?? e);
       throw e;
     }
   }
@@ -102,7 +104,7 @@ async function HandleBeforeEachHooks(test: Test) {
       let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'beforeEach' ? `.${propertyKey}:beforeEach` : ':beforeEach')));
 
       console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
-      console.error(e?.stack ?? e);
+      console.error((e as any)?.stack ?? e);
       throw e;
     }
   }
@@ -118,7 +120,7 @@ async function HandleAfterEachHooks(test: Test) {
       let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'afterEach' ? `.${propertyKey}:afterEach` : ':afterEach')));
 
       console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
-      console.error(e?.stack ?? e);
+      console.error((e as any)?.stack ?? e);
       throw e;
     }
   }
@@ -146,8 +148,8 @@ async function HandleSpecs(test: Test, log: Function) {
 
       log(`${OK_TEXT} ${timeText} ${testName}()`);
     } catch (e) {
-      if (e?._nole_anchor) {
-        let reason = e.reason;
+      if ((e as any)?._nole_anchor) {
+        let reason = (e as any).reason;
         log(`${DYNAMIC_SKIP_TEXT} ${' '.repeat(8)} ${testName}() ${reason ? '{' + reason + '}' : ''}`);
         continue;
       }
@@ -155,7 +157,7 @@ async function HandleSpecs(test: Test, log: Function) {
       let timeText = TimeFactor(start.end(), spec.timeout);
 
       console.error(`${FAILED_TEXT} ${timeText} ${testName}()`);
-      console.error(e?.stack ?? e);
+      console.error((e as any)?.stack ?? e);
       throw e;
     }
 
@@ -173,7 +175,7 @@ async function HandleAfterHooks(test: Test) {
       let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'after' ? `.${propertyKey}:after` : ':after')));
 
       console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
-      console.error(e?.stack ?? e);
+      console.error((e as any)?.stack ?? e);
       throw e;
     }
   }
@@ -195,7 +197,7 @@ async function HandleCleanUp(test: Test) {
       let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'cleanUp' ? `.${propertyKey}:cleanUp` : ':cleanUp')));
 
       console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
-      console.error(e?.stack ?? e);
+      console.error((e as any)?.stack ?? e);
       throw e;
     }
   }

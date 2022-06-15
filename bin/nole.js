@@ -1,19 +1,20 @@
-#!/usr/bin/env node
+#!/usr/bin/env node --loader=ts-node/esm
 
-const program = require('commander');
-const glob = require('glob');
-const path = require('path');
-const colors = require('colors/safe');
-const package = require('../package.json');
-const { ManualRun } = require('../dist/run');
-const { TimeDifference } = require('../dist/utils/time_difference');
-const { TimeResolve } = require('../dist/utils/time_factor');
+import program from 'commander';
+import glob from 'glob';
+import path from 'path';
+import fs from 'fs';
+import colors from 'colors/safe.js';
+import { ManualRun } from '../dist/run.js';
+import { TimeDifference } from '../dist/utils/time_difference.js';
+import { TimeResolve } from '../dist/utils/time_factor.js';
+
+const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url)).toString())
 
 program
   .usage('<glob> ...')
-  .option('-T, --no-typescript', 'disable ts-node register')
   .option('-L, --no-log', 'disable console.log')
-  .version(package.version)
+  .version(pkg.version)
   .parse(process.argv);
 
 
@@ -23,7 +24,7 @@ if (!program.args.length) {
   let time = TimeDifference.begin();
 
   let log = console.log.bind(console);
-  
+
   if (!program.log) {
     console.log = function () { }
   }
@@ -36,7 +37,7 @@ if (!program.args.length) {
 
       resolve(matches);
     })
-  }))).then(list => {
+  }))).then(async list => {
     let fileList = [];
 
     for (let item of list) {
@@ -50,25 +51,24 @@ if (!program.args.length) {
 
     let file = time.end();
 
-    if (program.typescript) {
-      require('ts-node').register();
-    }
-
     for (let file of fileList) {
-      require(file);
+      await import(`file://${file}`);
     }
 
     let prop = time.end();
 
-    log('Nole tests v' + package.version);
-    ManualRun(log).then(() => {
+    log('Nole tests v' + pkg.version);
+    try {
+      await ManualRun(log);
+
       log(' discover: %s', TimeResolve(file))
       log('  resolve: %s', TimeResolve(prop - file))
       log('    tests: %s', TimeResolve(time.end() - prop))
       process.exit(0);
-    }).catch(e => {
+    } catch(e) {
+      console.error(e);
       process.exit(1);
-    })
+    }
   }).catch(e => {
     failed('Error occurred on resolving files');
     console.error(e.stack || e);

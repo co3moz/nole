@@ -1,4 +1,6 @@
-import * as colors from 'colors/safe';
+import * as clrs from 'colors/safe.js';
+
+const colors = (clrs as any).default;
 
 export function TimeFactor(diff: number, timeout: number) {
   if (diff < timeout / 5) return colors.green(TimeResolve(diff).padStart(9, ' '));
