@@ -39,11 +39,13 @@ export function ManualRun(log: Function) {
           await HandleSpecs(test, log);
           await HandleAfterHooks(test);
 
+          test.isFinished = true;
+          
           if (test.dependents.length == 0) {
             await HandleCleanUp(test);
           }
-
-          test.isFinished = true;
+          
+          test.isFullyFinished = true;
         } else {
           DependencyLock(hashMap);
         }
@@ -203,7 +205,7 @@ async function HandleCleanUp(test: Test) {
   }
 
   for (let tree of test.dependencies) {
-    HandleCleanUp(tree.dependency);
+    await HandleCleanUp(tree.dependency);
   }
 }
 
