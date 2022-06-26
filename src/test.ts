@@ -23,15 +23,12 @@ export class Test {
   skipClass: ISkip | null = null;
   specs = new Map<string, ISpec>();
   hooks = new Map<string, IHook>();
-  isFinished: boolean; // cleanup ignored
-  isFullyFinished: boolean; // including cleanup
+  isFinished: boolean = false; // cleanup ignored
+  isFullyFinished: boolean = false; // including cleanup
   cleanUpCalled: boolean = false;
   testInstance: any;
 
-  constructor(public target: any) {
-    this.isFinished = false;
-    this.isFullyFinished = false;
-  }
+  constructor(public target: any) {}
 
   get name() {
     return this.target.name;

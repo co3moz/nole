@@ -11,3 +11,9 @@ export class SkipAllTest {
   @Spec()
   async wontRunToo() { }
 }
+
+@SkipClass()
+export class SkipAllWithoutReason {
+  @Spec()
+  async wontRun() { }
+}

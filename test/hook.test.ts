@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { Spec, Hook, Skip, HookType } from "../src/index.js";
 
-export class BasicTest {
+export class HookTest {
   array: any[] = [1, 2, 3];
 
   @Hook(HookType.BeforeEach)

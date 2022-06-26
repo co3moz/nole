@@ -150,6 +150,32 @@ class Other {
 > * All dependencies will be waited until done
 > * If dependencies cannot resolve, it will occurr an error after the available tests done.
 
+
+## Multi Dependencies
+
+Easier way to declare dependencies by decorating class with an array.
+
+```ts
+// test/redis.test.ts
+import { Spec, Dependencies } from 'nole';
+import { Database } from './database.test';
+import { Other } from './other.test';
+
+@Dependencies([
+  Database,
+  Other
+])
+class Redis {
+  database: Database; // camel-case syntax
+  // even though other does not exist in this test, but nole will make sure it is completed when this test runs
+
+  @Spec() 
+  async DoThings() {
+    await database.connection.doStuff();
+  }
+}
+```
+
 ## Hook
 
 Hooks will help you to develop helper methods.

@@ -1,5 +1,6 @@
 import { HashMap } from "./data.js";
 import { Test, HookType, ClassDefition } from "./test.js";
+import camelcase from "camelcase";
 
 /**
  * Assignes method as test case
@@ -21,6 +22,22 @@ export function Dependency<T>(dependency: ClassDefition<T>): PropertyDecorator {
     DeclareDependencyForTestClass(target, <string>propertyKey, dependency);
   }
 }
+
+/**
+ * Assignes dependencies for test class
+ * @param dependencies a Test class array that needed
+ */
+export function Dependencies(dependencies: ClassDefition<any>[]): ClassDecorator {
+  return function (target) {
+    for (const dependency of dependencies) {
+      const propertyKey = camelcase(dependency.name, {
+        preserveConsecutiveUppercase: true
+      });
+      DeclareDependencyForTestClass({ constructor: target }, propertyKey, dependency);
+    }
+  }
+}
+
 
 
 /**

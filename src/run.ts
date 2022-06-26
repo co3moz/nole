@@ -42,7 +42,7 @@ export function ManualRun(log: Function) {
           test.isFinished = true;
           
           if (test.dependents.length == 0) {
-            await HandleCleanUp(test);
+            await HandleCleanUp(test, log);
           }
           
           test.isFullyFinished = true;
@@ -184,7 +184,7 @@ async function HandleAfterHooks(test: Test) {
 }
 
 
-async function HandleCleanUp(test: Test) {
+async function HandleCleanUp(test: Test, log: Function) {
   if (test.cleanUpCalled) return;
   if (!test.dependents.every(dependent => dependent.isFinished)) return;
 
@@ -192,12 +192,17 @@ async function HandleCleanUp(test: Test) {
 
   for (let [propertyKey, hook] of test.hooks.entries()) {
     if (hook.type != HookType.CleanUp) continue;
+    
+    let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'cleanUp' ? `.${propertyKey}:cleanUp` : ':cleanUp')));
+    let start = TimeDifference.begin();
+
     try {
       await Executor(test.testInstance[propertyKey].bind(test.testInstance), hook.timeout);
 
-    } catch (e) {
-      let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'cleanUp' ? `.${propertyKey}:cleanUp` : ':cleanUp')));
+      let timeText = TimeFactor(start.end(), hook.timeout);
 
+      log(`${OK_TEXT} ${timeText} ${hookName}()`);
+    } catch (e) {
       console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
       console.error((e as any)?.stack ?? e);
       throw e;
@@ -205,7 +210,7 @@ async function HandleCleanUp(test: Test) {
   }
 
   for (let tree of test.dependencies) {
-    await HandleCleanUp(tree.dependency);
+    await HandleCleanUp(tree.dependency, log);
   }
 }
 
