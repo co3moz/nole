@@ -24,7 +24,6 @@ export class Test {
   specs = new Map<string, ISpec>();
   hooks = new Map<string, IHook>();
   isFinished: boolean = false; // cleanup ignored
-  isFullyFinished: boolean = false; // including cleanup
   cleanUpCalled: boolean = false;
   testInstance: any;
 

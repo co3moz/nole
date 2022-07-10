@@ -14,6 +14,7 @@ const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.ur
 program
   .usage('<glob> ...')
   .option('-L, --no-log', 'disable console.log')
+  .option('-O, --order-debug', 'shows execution order')
   .version(pkg.version)
   .parse(process.argv);
 
@@ -59,13 +60,16 @@ if (!program.args.length) {
 
     log('Nole tests v' + pkg.version);
     try {
-      await ManualRun(log);
+      await ManualRun({
+        log,
+        orderDebug: program.orderDebug
+      });
 
       log(' discover: %s', TimeResolve(file))
       log('  resolve: %s', TimeResolve(prop - file))
       log('    tests: %s', TimeResolve(time.end() - prop))
       process.exit(0);
-    } catch(e) {
+    } catch (e) {
       console.error(e);
       process.exit(1);
     }

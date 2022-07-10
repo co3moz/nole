@@ -5,7 +5,7 @@ export class HookTest {
   array: any[] = [1, 2, 3];
 
   @Hook(HookType.BeforeEach)
-  async beforeEach() {
+  async pushFourIntoArray() {
     this.array.push(4);
   }
 

@@ -286,6 +286,38 @@ Connection closed!
 
 We do not provide assert library. You can use chai or should.js.
 
+## Debugging
+
+Having cleanup features with missing dependencies could lead to issues and time loses. To make sure execution of tests correct, use `-O` parameter to print out every spec and hook without calling the function. It will also print before/after hook orders.
+
+```bash
+$ nole -O ./test/**/*.test.ts
+  (skip)             SkipAllTest.wontRun() {skip all class}
+  (skip)             SkipAllTest.wontRunToo() {wont run too}
+  (skip)             SkipAllWithoutReason.wontRun()
+   (ok)         0 ms BasicTest.checkEqual()
+   (ok)         0 ms DependencyTest.check()
+   (ok)         0 ms CleanUpLayer1Test.start()
+   (ok)         0 ms CleanUpLayer2Test.start()
+   (ok)         0 ms CleanUpLayer3Test.start()
+   (ok)         0 ms DynamicSkipTest.thisShouldBeSkipped()
+   (ok)         0 ms HookTest.pushFourIntoArray:beforeEach()
+   (ok)         0 ms HookTest.hasToBe4()
+  (skip)             HookTest.hasToBe4Again() {no need}
+   (ok)         0 ms HookTest.pushFourIntoArray:beforeEach()
+   (ok)      0.03 ms HookTest.hasToBe4AgainButNotSkipped()
+   (ok)         0 ms MultiDependency.test()
+   (ok)         0 ms CleanUpLayer3Test:cleanUp()
+   (ok)         0 ms CleanUpLayer2Test:cleanUp()
+   (ok)         0 ms CleanUpLayer1Test:cleanUp()
+   (ok)         0 ms DynamicTest.thisTestsShouldNotFail()
+   (ok)         0 ms TimeFactorTest.evaluate()
+   (ok)         0 ms TimeDifferenceTest.evaluate()
+   (ok)         0 ms ExecutorTest.evaluate()
+   (ok)         0 ms ExecutorTest.throws()
+   (ok)         0 ms ExecutorTest.timeout()
+```
+
 ## Compiled files
 
 > Deprecated (v2.x+), It will always use ts-node/esm module

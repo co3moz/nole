@@ -13,10 +13,17 @@ const DYNAMIC_SKIP_TEXT = colors.bold(colors.blue(' (dskip)   '));
 const FAILED_TEXT = colors.bold(colors.red(' (failed) '));
 const HOOK_FAILED_TEXT = colors.bold(colors.red(' (hook failed) '));
 
-export function ManualRun(log: Function) {
-  if (!log) {
-    log = console.log.bind(console);
+interface Options {
+  log: Function,
+  orderDebug: boolean
+}
+
+export function ManualRun(options: Options) {
+  if (!options.log) {
+    options.log = console.log.bind(console);
   }
+
+  const log = options.log;
 
   return new Promise<void>(async (resolve, reject) => {
     try {
@@ -35,17 +42,15 @@ export function ManualRun(log: Function) {
           CreateInstanceIfNotExists(test);
           HandleDependencies(test);
 
-          await HandleBeforeHooks(test);
-          await HandleSpecs(test, log);
-          await HandleAfterHooks(test);
+          await HandleBeforeHooks(test, options);
+          await HandleSpecs(test, options);
+          await HandleAfterHooks(test, options);
 
           test.isFinished = true;
-          
+
           if (test.dependents.length == 0) {
-            await HandleCleanUp(test, log);
+            await HandleCleanUp(test, options);
           }
-          
-          test.isFullyFinished = true;
         } else {
           DependencyLock(hashMap);
         }
@@ -79,16 +84,22 @@ function HandleDependencies(test: Test) {
   }
 }
 
-async function HandleBeforeHooks(test: Test) {
+async function HandleBeforeHooks(test: Test, options: Options) {
   for (let [propertyKey, hook] of test.hooks.entries()) {
     if (hook.type != HookType.Before) continue;
 
+    let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'before' ? `.${propertyKey}:before` : ':before')));
+
     try {
-      await Executor(test.testInstance[propertyKey].bind(test.testInstance), hook.timeout);
+      if (!options.orderDebug) {
+        await Executor(test.testInstance[propertyKey].bind(test.testInstance), hook.timeout);
+      } else {
+        let timeText = TimeFactor(0, hook.timeout);
+
+        options.log(`${OK_TEXT} ${timeText} ${hookName}()`);
+      }
 
     } catch (e) {
-      let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'before' ? `.${propertyKey}:before` : ':before')));
-
       console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
       console.error((e as any)?.stack ?? e);
       throw e;
@@ -96,14 +107,21 @@ async function HandleBeforeHooks(test: Test) {
   }
 }
 
-async function HandleBeforeEachHooks(test: Test) {
+async function HandleBeforeEachHooks(test: Test, options: Options) {
   for (let [propertyKey, hook] of test.hooks.entries()) {
     if (hook.type != HookType.BeforeEach) continue;
+    let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'beforeEach' ? `.${propertyKey}:beforeEach` : ':beforeEach')));
+    
     try {
-      await Executor(test.testInstance[propertyKey].bind(test.testInstance), hook.timeout);
+      if (!options.orderDebug) {
+        await Executor(test.testInstance[propertyKey].bind(test.testInstance), hook.timeout);
+      } else {
+        let timeText = TimeFactor(0, hook.timeout);
+
+        options.log(`${OK_TEXT} ${timeText} ${hookName}()`);
+      }
 
     } catch (e) {
-      let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'beforeEach' ? `.${propertyKey}:beforeEach` : ':beforeEach')));
 
       console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
       console.error((e as any)?.stack ?? e);
@@ -112,15 +130,22 @@ async function HandleBeforeEachHooks(test: Test) {
   }
 }
 
-async function HandleAfterEachHooks(test: Test) {
+async function HandleAfterEachHooks(test: Test, options: Options) {
   for (let [propertyKey, hook] of test.hooks.entries()) {
     if (hook.type != HookType.AfterEach) continue;
+    
+    let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'afterEach' ? `.${propertyKey}:afterEach` : ':afterEach')));
+
     try {
-      await Executor(test.testInstance[propertyKey].bind(test.testInstance), hook.timeout);
+      if (!options.orderDebug) {
+        await Executor(test.testInstance[propertyKey].bind(test.testInstance), hook.timeout);
+      } else {
+        let timeText = TimeFactor(0, hook.timeout);
+
+        options.log(`${OK_TEXT} ${timeText} ${hookName}()`);
+      }
 
     } catch (e) {
-      let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'afterEach' ? `.${propertyKey}:afterEach` : ':afterEach')));
-
       console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
       console.error((e as any)?.stack ?? e);
       throw e;
@@ -128,7 +153,9 @@ async function HandleAfterEachHooks(test: Test) {
   }
 }
 
-async function HandleSpecs(test: Test, log: Function) {
+async function HandleSpecs(test: Test, options: Options) {
+  const log = options.log;
+
   for (let [propertyKey, spec] of test.specs.entries()) {
     let testName = colors.bold(colors.yellow(test.name + '.' + propertyKey));
 
@@ -139,12 +166,14 @@ async function HandleSpecs(test: Test, log: Function) {
       continue;
     }
 
-    await HandleBeforeEachHooks(test);
+    await HandleBeforeEachHooks(test, options);
 
     let start = TimeDifference.begin();
 
     try {
-      await Executor(test.testInstance[propertyKey].bind(test.testInstance), spec.timeout);
+      if (!options.orderDebug) {
+        await Executor(test.testInstance[propertyKey].bind(test.testInstance), spec.timeout);
+      }
 
       let timeText = TimeFactor(start.end(), spec.timeout);
 
@@ -163,19 +192,26 @@ async function HandleSpecs(test: Test, log: Function) {
       throw e;
     }
 
-    await HandleAfterEachHooks(test);
+    await HandleAfterEachHooks(test, options);
   }
 }
 
-async function HandleAfterHooks(test: Test) {
+async function HandleAfterHooks(test: Test, options: Options) {
   for (let [propertyKey, hook] of test.hooks.entries()) {
     if (hook.type != HookType.After) continue;
+
+    let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'after' ? `.${propertyKey}:after` : ':after')));
+
     try {
-      await Executor(test.testInstance[propertyKey].bind(test.testInstance), hook.timeout);
+      if (!options.orderDebug) {
+        await Executor(test.testInstance[propertyKey].bind(test.testInstance), hook.timeout);
+      } else {
+        let timeText = TimeFactor(0, hook.timeout);
+
+        options.log(`${OK_TEXT} ${timeText} ${hookName}()`);
+      }
 
     } catch (e) {
-      let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'after' ? `.${propertyKey}:after` : ':after')));
-
       console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
       console.error((e as any)?.stack ?? e);
       throw e;
@@ -184,20 +220,24 @@ async function HandleAfterHooks(test: Test) {
 }
 
 
-async function HandleCleanUp(test: Test, log: Function) {
+async function HandleCleanUp(test: Test, options: Options) {
   if (test.cleanUpCalled) return;
-  if (!test.dependents.every(dependent => dependent.isFinished)) return;
+  if (!test.dependents.every(dependent => dependent.isFinished && dependent.cleanUpCalled)) return;
 
   test.cleanUpCalled = true;
 
+  const log = options.log;
+
   for (let [propertyKey, hook] of test.hooks.entries()) {
     if (hook.type != HookType.CleanUp) continue;
-    
+
     let hookName = colors.bold(colors.yellow(test.name + (propertyKey != 'cleanUp' ? `.${propertyKey}:cleanUp` : ':cleanUp')));
     let start = TimeDifference.begin();
 
     try {
-      await Executor(test.testInstance[propertyKey].bind(test.testInstance), hook.timeout);
+      if (!options.orderDebug) {
+        await Executor(test.testInstance[propertyKey].bind(test.testInstance), hook.timeout);
+      }
 
       let timeText = TimeFactor(start.end(), hook.timeout);
 
@@ -210,7 +250,7 @@ async function HandleCleanUp(test: Test, log: Function) {
   }
 
   for (let tree of test.dependencies) {
-    await HandleCleanUp(tree.dependency, log);
+    await HandleCleanUp(tree.dependency, options);
   }
 }
 
