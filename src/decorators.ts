@@ -31,7 +31,8 @@ export function Dependencies(dependencies: ClassDefition<any>[]): ClassDecorator
   return function (target) {
     for (const dependency of dependencies) {
       const propertyKey = camelcase(dependency.name, {
-        preserveConsecutiveUppercase: true
+        preserveConsecutiveUppercase: true,
+        locale: 'en-US'
       });
       DeclareDependencyForTestClass({ constructor: target }, propertyKey, dependency);
     }
