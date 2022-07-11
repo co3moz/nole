@@ -332,3 +332,10 @@ $ nole -T ./build/test/**/*.test.js
 ```
 
 > This will prevent to load ts-node register. It will be quite faster.
+
+## Environment values to configure stuff
+
+```
+NOLE_PRESERVE_CONSECUTIVE_UPPERCASE=true
+NOLE_PASCALCASE=false
+```

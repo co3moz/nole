@@ -1,6 +1,6 @@
 {
   "name": "nole",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "type": "module",
   "description": "Testing Library for Typescript projects",
   "main": "dist/index.js",
