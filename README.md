@@ -176,6 +176,52 @@ class Redis {
 }
 ```
 
+## Lazy multi Dependencies / after
+
+Can solve order of execution issues
+
+```ts
+// test/redis.test.ts
+import { Spec, Dependencies, After } from 'nole';
+
+@Dependencies(() => [ B ])
+// or
+// @After(() => [ B ])
+class A {
+  b: B;
+
+  @Spec() 
+  async DoThings() { }
+}
+
+class B {
+  @Spec() 
+  async DoThings() { }
+}
+```
+
+## Reverse dependency / dependent / before
+
+
+
+```ts
+// test/redis.test.ts
+import { Spec, Dependents, Before } from 'nole';
+
+class A {
+  b: B;
+
+  @Spec() 
+  async DoThings() { }
+}
+
+@Before(() => [ A ])
+class B {
+  @Spec() 
+  async DoThings() { }
+}
+```
+
 ## Hook
 
 Hooks will help you to develop helper methods.
@@ -338,4 +384,5 @@ $ nole -T ./build/test/**/*.test.js
 ```
 NOLE_PRESERVE_CONSECUTIVE_UPPERCASE=true
 NOLE_PASCALCASE=false
+NOLE_WAIT_PERIOD=500
 ```

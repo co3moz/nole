@@ -7,6 +7,6 @@ export class TimeDifferenceTest {
   @Spec()
   async evaluate() {
     const td = TimeDifference.begin();
-    td.end()
+    td.end();
   }
 }

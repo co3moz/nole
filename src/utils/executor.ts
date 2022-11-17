@@ -6,7 +6,7 @@ export function Executor(fn: Function, timeout: number): Promise<void> {
       let expectPromise = fn();
       if (expectPromise && expectPromise.then) {
         _timeout = setTimeout(function () {
-          reject(new Error('Timeout occurred! value: ' + timeout));
+          reject(new Error("Timeout occurred! value: " + timeout));
         }, timeout);
 
         await expectPromise;

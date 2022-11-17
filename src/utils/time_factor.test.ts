@@ -13,7 +13,7 @@ export class TimeFactorTest {
       120 * 1000,
       60 * 60 * 1000,
       65 * 60 * 1000,
-      25 * 60 * 60 * 1000
+      25 * 60 * 60 * 1000,
     ]) {
       TimeFactor(n / 1000, n);
       TimeFactor(n / 500, n);

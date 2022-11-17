@@ -1,19 +1,19 @@
-import * as assert from 'assert';
+import * as assert from "assert";
 import { Spec, Skip } from "../src/index.js";
-import { SkipClass } from '../src/decorators.js';
+import { SkipClass } from "../src/decorators.js";
 
-@SkipClass('skip all class')
+@SkipClass("skip all class")
 export class SkipAllTest {
   @Spec()
-  async wontRun() { }
+  async wontRun() {}
 
-  @Skip('won\'t run too')
+  @Skip("won't run too")
   @Spec()
-  async wontRunToo() { }
+  async wontRunToo() {}
 }
 
 @SkipClass()
 export class SkipAllWithoutReason {
   @Spec()
-  async wontRun() { }
+  async wontRun() {}
 }

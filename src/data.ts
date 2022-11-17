@@ -1,6 +1,6 @@
 import { Test } from "./test.js";
 
-const KEY = '_nole_hash';
+const KEY = "_nole_hash";
 
 export function HashMap(): Map<any, Test> {
   let g: any = global;
@@ -9,5 +9,5 @@ export function HashMap(): Map<any, Test> {
     return g[KEY];
   }
 
-  return g[KEY] = new Map<any, Test>();
+  return (g[KEY] = new Map<any, Test>());
 }

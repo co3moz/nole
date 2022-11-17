@@ -1,19 +1,19 @@
 export interface IDependency {
-  propertyKey: string
-  dependency: Test
+  propertyKey: string;
+  dependency: Test;
 }
 
 export interface ISpec {
-  timeout: number
+  timeout: number;
 }
 
 export interface IHook {
-  type: HookType
-  timeout: number
+  type: HookType;
+  timeout: number;
 }
 
 export interface ISkip {
-  reason: string
+  reason: string;
 }
 
 export class Test {
@@ -39,7 +39,9 @@ export enum HookType {
   After, // Trigger when test case did all the specs
   BeforeEach, // Trigger before each spec
   AfterEach, // Trigger after each spec
-  CleanUp // Trigger after all dependents tested (You can safely remove connections etc.)
+  CleanUp, // Trigger after all dependents tested (You can safely remove connections etc.)
 }
 
-export interface ClassDefition<T> { new(): T; }
+export interface ClassDefition<T> {
+  new (): T;
+}

@@ -13,15 +13,15 @@ export class ExecutorTest {
   async throws() {
     await assert.rejects(() => {
       return Executor(() => {
-        throw new Error('throws');
+        throw new Error("throws");
       }, 1);
-    })
+    });
   }
 
   @Spec()
   async timeout() {
     await assert.rejects(() => {
       return Executor(() => new Promise(() => {}), 10);
-    })
+    });
   }
 }

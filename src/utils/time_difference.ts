@@ -8,14 +8,12 @@ export class TimeDifference {
     this.startAt = process.hrtime();
   }
 
-
   /**
    * Creates the instance at the begining
    */
   public static begin() {
     return new TimeDifference();
   }
-
 
   /**
    * Finishes the time, returns data in milliseconds

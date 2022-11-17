@@ -1,4 +1,4 @@
-import * as assert from 'assert';
+import * as assert from "assert";
 import { Spec } from "../src/index.js";
 
 export class DynamicTest {

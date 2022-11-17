@@ -11,10 +11,9 @@ export class CleanUpLayer1Test {
   @Hook(HookType.CleanUp)
   async cleanUp() {
     this.data = null;
-    console.log('layer 1 clean up completed!');
+    console.log("layer 1 clean up completed!");
   }
 }
-
 
 export class CleanUpLayer2Test {
   data: any;
@@ -30,10 +29,9 @@ export class CleanUpLayer2Test {
   @Hook(HookType.CleanUp)
   async cleanUp() {
     this.data = null;
-    console.log('layer 2 clean up completed!');
+    console.log("layer 2 clean up completed!");
   }
 }
-
 
 export class CleanUpLayer3Test {
   data: any;
@@ -49,6 +47,6 @@ export class CleanUpLayer3Test {
   @Hook(HookType.CleanUp)
   async cleanUp() {
     this.data = null;
-    console.log('layer 3 clean up completed!');
+    console.log("layer 3 clean up completed!");
   }
 }

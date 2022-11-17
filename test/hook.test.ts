@@ -1,4 +1,4 @@
-import * as assert from 'assert';
+import * as assert from "assert";
 import { Spec, Hook, Skip, HookType } from "../src/index.js";
 
 export class HookTest {
@@ -14,7 +14,7 @@ export class HookTest {
     assert.equal(this.array.pop(), 4);
   }
 
-  @Skip('no need')
+  @Skip("no need")
   @Spec()
   async hasToBe4Again() {
     assert.equal(this.array.pop(), 4);
