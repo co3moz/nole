@@ -3,23 +3,16 @@
     "target": "es2020",
     "module": "es2020",
     "moduleResolution": "node",
-    "lib": [
-      "es2020",
-      "esnext"
-    ],
+    "lib": ["es2020", "esnext"],
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "dist",
     "removeComments": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "useDefineForClassFields": false
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ],
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }
