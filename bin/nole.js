@@ -1,4 +1,4 @@
-#!/usr/bin/env node --loader=ts-node/esm
+#!/usr/bin/env node
 
 import program from "commander";
 import glob from "glob";
@@ -8,6 +8,9 @@ import colors from "colors/safe.js";
 import { ManualRun } from "../dist/run.js";
 import { TimeDifference } from "../dist/utils/time_difference.js";
 import { Delay, TimeResolve } from "../dist/utils/time_factor.js";
+import { register } from "node:module";
+import { pathToFileURL } from "node:url";
+register("ts-node/esm", pathToFileURL("./"));
 
 const pkg = JSON.parse(
   fs.readFileSync(new URL("../package.json", import.meta.url)).toString()
