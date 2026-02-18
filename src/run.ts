@@ -1,331 +1,259 @@
-import { HashMap } from "./data.js";
-import { TimeDifference } from "./utils/time_difference.js";
-import { TimeFactor } from "./utils/time_factor.js";
-import * as clrs from "colors/safe.js";
-import { Executor } from "./utils/executor.js";
-import { HookType, Test } from "./test.js";
+import { HookType, TestWrap } from "./test-wrap.js";
+import { BaseTest, type TestClassInfo } from "./core.js";
+import { TEST_CLASS_KEY } from "./symbol.js";
+import { handleBeforeHooks } from "./handle/before-hooks.js";
+import { handleSpecs } from "./handle/specs.js";
+import { handleAfterHooks } from "./handle/after-hooks.js";
+import { handleCleanUp } from "./handle/cleanup-hooks.js";
+import { colors, FAILED_TEXT } from "./const.js";
 
-const colors = (clrs as any).default;
+let allTests: Map<new () => BaseTest, TestWrap> = new Map();
+let notTestedYet: Map<new () => BaseTest, TestWrap> = new Map();
 
-const OK_TEXT = colors.bold(colors.green("   (ok)   "));
-const SKIP_TEXT = colors.bold(colors.yellow("  (skip)  "));
-const DYNAMIC_SKIP_TEXT = colors.bold(colors.blue(" (dskip)   "));
-const FAILED_TEXT = colors.bold(colors.red(" (failed) "));
-const HOOK_FAILED_TEXT = colors.bold(colors.red(" (hook failed) "));
+export async function ManualRun(originalTests: Set<new () => BaseTest>) {
+  for (let test of originalTests) {
+    if (allTests.has(test)) {
+      continue;
+    }
 
-interface Options {
-  log: Function;
-  orderDebug: boolean;
-}
+    const wrap = new TestWrap(test);
 
-export function ManualRun(options: Options) {
-  if (!options.log) {
-    options.log = console.log.bind(console);
+    allTests.set(test, wrap);
+    notTestedYet.set(test, wrap);
   }
 
-  const log = options.log;
+  extractInformationFromClasses(notTestedYet);
 
-  return new Promise<void>(async (resolve, reject) => {
-    try {
-      let hashMap = new Map(HashMap());
+  if (!notTestedYet.size) {
+    throw new Error("No specs found");
+  }
 
-      if (!hashMap.size) {
-        log(`${FAILED_TEXT} no specs found`);
-        throw new Error("No specs found");
+  while (notTestedYet.size) {
+    let entry = pickNext(notTestedYet);
+
+    if (entry) {
+      let test = entry[1];
+      // console.log(colors.bold(colors.cyan(`Running test: ${test.name}`)));
+
+      notTestedYet.delete(test.target);
+      createInstanceIfNotExists(test);
+      handleDependencies(test);
+
+      await handleBeforeHooks(test);
+      await handleSpecs(test);
+      await handleAfterHooks(test);
+
+      test.isFinished = true;
+
+      if (test.dependents.length == 0) {
+        await handleCleanUp(test);
       }
-
-      while (hashMap.size) {
-        let test = PickNextTestFromHashMap(hashMap);
-
-        if (test) {
-          hashMap.delete(test.target);
-          CreateInstanceIfNotExists(test);
-          HandleDependencies(test);
-
-          await HandleBeforeHooks(test, options);
-          await HandleSpecs(test, options);
-          await HandleAfterHooks(test, options);
-
-          test.isFinished = true;
-
-          if (test.dependents.length == 0) {
-            await HandleCleanUp(test, options);
-          }
-        } else {
-          DependencyLock(hashMap);
-        }
-      }
-
-      resolve();
-    } catch (e) {
-      reject(e);
+    } else {
+      dependencyLock(notTestedYet);
     }
-  });
+  }
 }
 
-function PickNextTestFromHashMap(hashMap: Map<any, Test>) {
-  for (let test of hashMap.values()) {
+function extractInformationFromClasses(
+  tests: Map<new () => BaseTest, TestWrap>,
+) {
+  for (let [target, test] of tests.entries()) {
+    updateInformationForClass(target, test, tests);
+  }
+}
+
+export function updateInformationForClass(
+  target: new () => BaseTest,
+  test: TestWrap,
+  tests: Map<new () => BaseTest, TestWrap>,
+) {
+  const config = target[TEST_CLASS_KEY] as TestClassInfo;
+
+  if (config.skip) {
+    test.skipClass = { reason: config.skip };
+  }
+
+  test.dependencies = config.dependencies
+    ? Array.from(
+        config.dependencies.entries().map(([key, dep]) => {
+          const actual = dep();
+          let testWrap = tests.get(actual);
+
+          if (!testWrap) {
+            testWrap = new TestWrap(actual);
+            tests.set(actual, testWrap);
+            allTests.set(actual, testWrap);
+          }
+
+          testWrap.dependents.push(test);
+
+          return {
+            propertyKey: key,
+            dependency: testWrap,
+          };
+        }),
+      )
+    : [];
+
+  if (config.before) {
+    const beforeTests = config.before();
+
+    for (let i = 0; i < beforeTests.length; i++) {
+      const actual = beforeTests[i];
+
+      let testWrap = tests.get(actual);
+
+      if (!testWrap) {
+        testWrap = new TestWrap(actual);
+        tests.set(actual, testWrap);
+        allTests.set(actual, testWrap);
+      }
+
+      testWrap.dependencies.push({
+        propertyKey: "_before_" + i,
+        dependency: test,
+      });
+
+      test.dependents.push(testWrap);
+    }
+  }
+
+  if (config.after) {
+    const afterTests = config.after();
+
+    for (let i = 0; i < afterTests.length; i++) {
+      const actual = afterTests[i];
+
+      let testWrap = tests.get(actual);
+
+      if (!testWrap) {
+        testWrap = new TestWrap(actual);
+        tests.set(actual, testWrap);
+        allTests.set(actual, testWrap);
+      }
+
+      test.dependencies.push({
+        propertyKey: "_after_" + i,
+        dependency: testWrap,
+      });
+
+      testWrap.dependents.push(test);
+    }
+  }
+}
+
+function pickNext(tests: Map<new () => BaseTest, TestWrap>) {
+  for (let entry of tests.entries()) {
+    let test = entry[1];
     if (test.isFinished) continue;
     if (!test.dependencies.every((x) => x.dependency.isFinished)) continue;
 
-    return test;
+    return entry;
   }
 }
 
-function CreateInstanceIfNotExists(test: Test) {
+export function createInstanceIfNotExists(test: TestWrap) {
   if (!test.testInstance) {
-    test.testInstance = new test.target();
+    const instance = new test.target();
+
+    test.testInstance = instance;
+  }
+
+  if (!test.specDetection) {
+    specDetection(test);
+    test.specDetection = true;
   }
 }
 
-function HandleDependencies(test: Test) {
+function specDetection(test: TestWrap) {
+  const instance = test.testInstance;
+  for (let key of getAllMethods(instance)) {
+    if (typeof key !== "string") {
+      continue;
+    }
+
+    let lowerKey = key.toLowerCase();
+
+    if (lowerKey.startsWith("skip")) {
+      test.skip.set(key, { reason: "marked as skipped" });
+    }
+
+    if (
+      lowerKey.startsWith("hook") ||
+      lowerKey === "cleanup" ||
+      lowerKey === "before" ||
+      lowerKey === "after" ||
+      lowerKey === "beforeeach" ||
+      lowerKey === "aftereach"
+    ) {
+      let type = HookType.Before;
+
+      if (lowerKey.endsWith("before")) {
+        type = HookType.Before;
+      } else if (lowerKey.endsWith("after")) {
+        type = HookType.After;
+      } else if (lowerKey.endsWith("beforeeach")) {
+        type = HookType.BeforeEach;
+      } else if (lowerKey.endsWith("aftereach")) {
+        type = HookType.AfterEach;
+      } else if (lowerKey.endsWith("cleanup")) {
+        type = HookType.CleanUp;
+      }
+
+      test.hooks.set(key, { type });
+      continue;
+    }
+
+    test.specs.set(key, {});
+  }
+}
+
+function getAllMethods(instance) {
+  let props = new Set();
+  let currentObj = instance;
+
+  while (currentObj && currentObj !== Object.prototype) {
+    Object.getOwnPropertyNames(currentObj).forEach((prop) => {
+      if (typeof currentObj[prop] === "function" && prop !== "constructor") {
+        props.add(prop);
+      }
+    });
+    currentObj = Object.getPrototypeOf(currentObj);
+  }
+
+  return Array.from(props);
+}
+
+function handleDependencies(test: TestWrap) {
   for (let dependency of test.dependencies) {
     test.testInstance[dependency.propertyKey] =
       dependency.dependency.testInstance;
   }
 }
 
-async function HandleBeforeHooks(test: Test, options: Options) {
-  for (let [propertyKey, hook] of test.hooks.entries()) {
-    if (hook.type != HookType.Before) continue;
-
-    let hookName = colors.bold(
-      colors.yellow(
-        test.name +
-          (propertyKey != "before" ? `.${propertyKey}:before` : ":before")
-      )
-    );
-
-    try {
-      if (!options.orderDebug) {
-        await Executor(
-          test.testInstance[propertyKey].bind(test.testInstance),
-          hook.timeout
-        );
-      } else {
-        let timeText = TimeFactor(0, hook.timeout);
-
-        options.log(`${OK_TEXT} ${timeText} ${hookName}()`);
-      }
-    } catch (e) {
-      console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
-      console.error((e as any)?.stack ?? e);
-      throw e;
-    }
-  }
-}
-
-async function HandleBeforeEachHooks(test: Test, options: Options) {
-  for (let [propertyKey, hook] of test.hooks.entries()) {
-    if (hook.type != HookType.BeforeEach) continue;
-    let hookName = colors.bold(
-      colors.yellow(
-        test.name +
-          (propertyKey != "beforeEach"
-            ? `.${propertyKey}:beforeEach`
-            : ":beforeEach")
-      )
-    );
-
-    try {
-      if (!options.orderDebug) {
-        await Executor(
-          test.testInstance[propertyKey].bind(test.testInstance),
-          hook.timeout
-        );
-      } else {
-        let timeText = TimeFactor(0, hook.timeout);
-
-        options.log(`${OK_TEXT} ${timeText} ${hookName}()`);
-      }
-    } catch (e) {
-      console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
-      console.error((e as any)?.stack ?? e);
-      throw e;
-    }
-  }
-}
-
-async function HandleAfterEachHooks(test: Test, options: Options) {
-  for (let [propertyKey, hook] of test.hooks.entries()) {
-    if (hook.type != HookType.AfterEach) continue;
-
-    let hookName = colors.bold(
-      colors.yellow(
-        test.name +
-          (propertyKey != "afterEach"
-            ? `.${propertyKey}:afterEach`
-            : ":afterEach")
-      )
-    );
-
-    try {
-      if (!options.orderDebug) {
-        await Executor(
-          test.testInstance[propertyKey].bind(test.testInstance),
-          hook.timeout
-        );
-      } else {
-        let timeText = TimeFactor(0, hook.timeout);
-
-        options.log(`${OK_TEXT} ${timeText} ${hookName}()`);
-      }
-    } catch (e) {
-      console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
-      console.error((e as any)?.stack ?? e);
-      throw e;
-    }
-  }
-}
-
-async function HandleSpecs(test: Test, options: Options) {
-  const log = options.log;
-
-  for (let [propertyKey, spec] of test.specs.entries()) {
-    let testName = colors.bold(colors.yellow(test.name + "." + propertyKey));
-
-    const shouldPropertySkip = test.skip.has(propertyKey);
-    if (shouldPropertySkip || test.skipClass) {
-      let reason = shouldPropertySkip
-        ? test.skip.get(propertyKey)!.reason
-        : test.skipClass!.reason;
-      log(
-        `${SKIP_TEXT} ${" ".repeat(9)} ${testName}() ${
-          reason ? "{" + reason + "}" : ""
-        }`
-      );
-      continue;
-    }
-
-    await HandleBeforeEachHooks(test, options);
-
-    let start = TimeDifference.begin();
-
-    try {
-      if (!options.orderDebug) {
-        await Executor(
-          test.testInstance[propertyKey].bind(test.testInstance),
-          spec.timeout
-        );
-      }
-
-      let timeText = TimeFactor(start.end(), spec.timeout);
-
-      log(`${OK_TEXT} ${timeText} ${testName}()`);
-    } catch (e) {
-      if ((e as any)?._nole_anchor) {
-        let reason = (e as any).reason;
-        log(
-          `${DYNAMIC_SKIP_TEXT} ${" ".repeat(8)} ${testName}() ${
-            reason ? "{" + reason + "}" : ""
-          }`
-        );
-        continue;
-      }
-
-      let timeText = TimeFactor(start.end(), spec.timeout);
-
-      console.error(`${FAILED_TEXT} ${timeText} ${testName}()`);
-      console.error((e as any)?.stack ?? e);
-      throw e;
-    }
-
-    await HandleAfterEachHooks(test, options);
-  }
-}
-
-async function HandleAfterHooks(test: Test, options: Options) {
-  for (let [propertyKey, hook] of test.hooks.entries()) {
-    if (hook.type != HookType.After) continue;
-
-    let hookName = colors.bold(
-      colors.yellow(
-        test.name +
-          (propertyKey != "after" ? `.${propertyKey}:after` : ":after")
-      )
-    );
-
-    try {
-      if (!options.orderDebug) {
-        await Executor(
-          test.testInstance[propertyKey].bind(test.testInstance),
-          hook.timeout
-        );
-      } else {
-        let timeText = TimeFactor(0, hook.timeout);
-
-        options.log(`${OK_TEXT} ${timeText} ${hookName}()`);
-      }
-    } catch (e) {
-      console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
-      console.error((e as any)?.stack ?? e);
-      throw e;
-    }
-  }
-}
-
-async function HandleCleanUp(test: Test, options: Options) {
-  if (test.cleanUpCalled) return;
-  if (
-    !test.dependents.every(
-      (dependent) => dependent.isFinished && dependent.cleanUpCalled
-    )
-  )
-    return;
-
-  test.cleanUpCalled = true;
-
-  const log = options.log;
-
-  for (let [propertyKey, hook] of test.hooks.entries()) {
-    if (hook.type != HookType.CleanUp) continue;
-
-    let hookName = colors.bold(
-      colors.yellow(
-        test.name +
-          (propertyKey != "cleanUp" ? `.${propertyKey}:cleanUp` : ":cleanUp")
-      )
-    );
-    let start = TimeDifference.begin();
-
-    try {
-      if (!options.orderDebug) {
-        await Executor(
-          test.testInstance[propertyKey].bind(test.testInstance),
-          hook.timeout
-        );
-      }
-
-      let timeText = TimeFactor(start.end(), hook.timeout);
-
-      log(`${OK_TEXT} ${timeText} ${hookName}()`);
-    } catch (e) {
-      console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
-      console.error((e as any)?.stack ?? e);
-      throw e;
-    }
-  }
-
-  for (let tree of test.dependencies) {
-    await HandleCleanUp(tree.dependency, options);
-  }
-}
-
-function DependencyLock(hashMap: Map<any, Test>) {
+function dependencyLock(tests: Map<new () => BaseTest, TestWrap>) {
   console.error(
     FAILED_TEXT +
-      colors.red("Looks like there is confict issue for dependency resolving!")
+      colors.red("Looks like there is confict issue for dependency resolving!"),
   );
 
   console.error("Possible conflicts;");
-  for (let test of hashMap.values()) {
+  for (let [, test] of tests) {
     console.error(
       `- class ${test.name} { ${test.dependencies
         .filter((x) => !x.dependency.isFinished)
         .map((x) => `@Dependency(${x.dependency.name}) ${x.propertyKey}`)
-        .join(", ")} }`
+        .join(", ")} }`,
     );
   }
 
   throw new Error("Dependency lock occurred!");
+}
+
+export function getTestMap() {
+  return allTests;
+}
+
+export function getFutureTestMap() {
+  return notTestedYet;
 }

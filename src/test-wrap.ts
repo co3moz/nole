@@ -1,24 +1,25 @@
+import { BaseTest, type TestClassInfo } from "./core.js";
+import { TEST_CLASS_KEY } from "./symbol.js";
+
 export interface IDependency {
   propertyKey: string;
-  dependency: Test;
+  dependency: TestWrap;
 }
 
-export interface ISpec {
-  timeout: number;
-}
+export interface ISpec {}
 
 export interface IHook {
   type: HookType;
-  timeout: number;
 }
 
 export interface ISkip {
   reason: string;
 }
 
-export class Test {
+// Old code, but works fine, so I won't change it for now
+export class TestWrap {
   dependencies: IDependency[] = [];
-  dependents: Test[] = [];
+  dependents: TestWrap[] = [];
   skip = new Map<string, ISkip>();
   skipClass: ISkip | null = null;
   specs = new Map<string, ISpec>();
@@ -26,8 +27,12 @@ export class Test {
   isFinished: boolean = false; // cleanup ignored
   cleanUpCalled: boolean = false;
   testInstance: any;
+  specDetection: boolean = false;
+  config: TestClassInfo;
 
-  constructor(public target: any) {}
+  constructor(public target: new () => BaseTest) {
+    this.config = target[TEST_CLASS_KEY];
+  }
 
   get name() {
     return this.target.name;
@@ -40,8 +45,4 @@ export enum HookType {
   BeforeEach, // Trigger before each spec
   AfterEach, // Trigger after each spec
   CleanUp, // Trigger after all dependents tested (You can safely remove connections etc.)
-}
-
-export interface ClassDefition<T> {
-  new (): T;
 }

@@ -1,21 +1,20 @@
-import { Spec, Dependency } from "../src/index.js";
+import { Test } from "../dist/index.js";
 
-export class BasicTest {
+class BasicTest extends Test({ timeout: 750 }) {
   variable = 1;
 
-  @Spec()
   async checkEqual() {
     await new Promise((resolve) => {
-      setTimeout(resolve, 1010);
+      setTimeout(resolve, 500);
     });
   }
 }
 
-export class DependencyTest {
-  @Dependency(BasicTest)
-  basicTest!: BasicTest;
-
-  @Spec()
+export class DependencyTest extends Test({
+  dependencies: {
+    basicTest: () => BasicTest,
+  },
+}) {
   async check() {
     if (this.basicTest.variable !== 1) {
       throw new Error("Dependency test failed!");

@@ -1,59 +1,37 @@
 #!/usr/bin/env node
 
 import program from "commander";
-import glob from "glob";
+import { glob } from "glob";
 import path from "path";
 import fs from "fs";
 import colors from "colors/safe.js";
-import { ManualRun } from "../dist/run.js";
+import { register } from "tsx/esm/api";
+const unregister = register();
+
 import { TimeDifference } from "../dist/utils/time_difference.js";
 import { Delay, TimeResolve } from "../dist/utils/time_factor.js";
-import { register } from "node:module";
-import { pathToFileURL } from "node:url";
-register("ts-node/esm", pathToFileURL("./"));
+import { TEST_CLASS_KEY } from "../dist/symbol.js";
+import { ManualRun } from "../dist/run.js";
 
 const pkg = JSON.parse(
-  fs.readFileSync(new URL("../package.json", import.meta.url)).toString()
+  fs.readFileSync(new URL("../package.json", import.meta.url)).toString(),
 );
 
-program
-  .usage("<glob> ...")
-  .option("-L, --no-log", "disable console.log")
-  .option("-O, --order-debug", "shows execution order")
-  .version(pkg.version)
-  .parse(process.argv);
+program.usage("<glob> ...").version(pkg.version).parse(process.argv);
 
 if (!program.args.length) {
   program.help();
 } else {
   let time = TimeDifference.begin();
 
-  let log = console.log.bind(console);
-
-  if (!program.log) {
-    console.log = function () {};
-  }
-
-  Promise.all(
-    program.args.map(
-      (arg) =>
-        new Promise((resolve, reject) => {
-          glob(arg, (err, matches) => {
-            if (err) {
-              return reject(err);
-            }
-
-            resolve(matches);
-          });
-        })
-    )
-  )
+  Promise.all(program.args.map((arg) => glob(arg)))
     .then(async (list) => {
       const fileList = [];
 
       for (const item of list) {
-        while (item.length)
+        while (item.length) {
           fileList.push(path.resolve(process.cwd(), item.pop()));
+        }
       }
 
       if (!fileList.length) {
@@ -63,8 +41,24 @@ if (!program.args.length) {
 
       const file = time.end();
 
+      const tests = new Set();
+
       for (const file of fileList) {
-        await import(`file://${file}`);
+        const module = await import(`file://${file}`);
+
+        for (const key in module) {
+          const value = module[key];
+
+          if (!value) {
+            continue;
+          }
+
+          if (!value[TEST_CLASS_KEY]) {
+            continue;
+          }
+
+          tests.add(value);
+        }
       }
 
       const prop = time.end();
@@ -78,20 +72,25 @@ if (!program.args.length) {
         dependencyResolveWaitPeriod = 500;
       }
 
-      log("Nole tests v" + pkg.version);
+      console.log("Nole tests v" + pkg.version);
+
       try {
         await Delay(dependencyResolveWaitPeriod);
 
-        await ManualRun({
-          log,
-          orderDebug: program.orderDebug,
-        });
+        try {
+          await ManualRun(tests);
+        } catch (e) {
+          if (e.message === "No specs found") {
+            log(`${FAILED_TEXT} no specs found`);
+          }
+          throw e;
+        }
 
-        log(" discover: %s", TimeResolve(file));
-        log("  resolve: %s", TimeResolve(prop - file));
-        log(
+        console.log(" discover: %s", TimeResolve(file));
+        console.log("  resolve: %s", TimeResolve(prop - file));
+        console.log(
           "    tests: %s",
-          TimeResolve(time.end() - prop - dependencyResolveWaitPeriod)
+          TimeResolve(time.end() - prop - dependencyResolveWaitPeriod),
         );
         process.exit(0);
       } catch (e) {

@@ -1,54 +1,41 @@
 import { strict as assert } from "assert";
-import { Before, Spec, After, Hook, HookType, Dependents } from "../src/index.js";
 
-// @After(() => [AlwaysExecuteFirst])
-export class AlwaysExecuteLater {
-  alwaysExecuteFirst: AlwaysExecuteFirst;
+import { Test } from "../dist/core.js";
+import { getTest } from "../dist/index.js";
 
-  @Spec()
+export class AlwaysExecuteLater extends Test({
+  after: () => [AlwaysExecuteFirst],
+}) {
   test() {
-    assert(this.alwaysExecuteFirst.value === 1);
+    const alwaysExecuteFirst = getTest(() => AlwaysExecuteFirst);
+    assert(alwaysExecuteFirst.value === 1);
+  }
+}
+export class AlwaysExecuteFirst extends Test() {
+  value = 0;
+
+  test() {
+    this.value = 1;
+  }
+}
+
+export class AlwaysExecuteLater2 extends Test({}) {
+  test() {
+    const alwaysExecuteFirst2 = getTest(() => AlwaysExecuteFirst2);
+    assert(alwaysExecuteFirst2.value === 1);
   }
 
-  @Hook(HookType.CleanUp)
   cleanUp() {}
 }
 
-@Dependents(() => [AlwaysExecuteLater])
-export class AlwaysExecuteFirst {
+export class AlwaysExecuteFirst2 extends Test({
+  before: () => [AlwaysExecuteLater2],
+}) {
   value = 0;
 
-  @Spec()
   test() {
     this.value = 1;
   }
 
-  @Hook(HookType.CleanUp)
-  cleanUp() {}
-}
-
-@After(() => [AlwaysExecuteFirst2])
-export class AlwaysExecuteLater2 {
-  alwaysExecuteFirst2: AlwaysExecuteFirst2;
-
-  @Spec()
-  test() {
-    assert(this.alwaysExecuteFirst2.value === 1);
-  }
-
-  @Hook(HookType.CleanUp)
-  cleanUp() {}
-}
-
-// @Before(() => [AlwaysExecuteLater2])
-export class AlwaysExecuteFirst2 {
-  value = 0;
-
-  @Spec()
-  test() {
-    this.value = 1;
-  }
-
-  @Hook(HookType.CleanUp)
   cleanUp() {}
 }

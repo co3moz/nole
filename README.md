@@ -1,9 +1,10 @@
 ![](docs/nole.png)
 
-Nole
-==========
+# Nole
 
-Nole is a testing platform just like mocha.. You can create test classes and declare specs with decorators..
+Nole is a testing platform just like mocha..
+
+> Breaking change at nole v3, plain old classes are better at this task.
 
 > Use nole 2.x for ESM and Typescript.
 
@@ -11,23 +12,20 @@ Nole is a testing platform just like mocha.. You can create test classes and dec
 
 ```ts
 // test/queue.test.ts
-import { Spec } from 'nole';
+import { Test } from "nole";
 
-class QueueTest {
+export class QueueTest extends Test() {
   queue!: Queue;
 
-  @Spec()
-  CreateInstance() {
-    this.queue = new Queue();  
+  createInstance() {
+    this.queue = new Queue();
   }
 
-  @Spec()
-  Push() {
+  push() {
     this.queue.push(10);
   }
 
-  @Spec(1000)
-  async Pipe() {
+  async pipe() {
     await this.queue.pipe(somewhere);
   }
 }
@@ -35,81 +33,48 @@ class QueueTest {
 
 ```bash
 $ nole ./test/**/*.test.ts
-  (ok)      0.09 ms QueueTest.CreateInstance()
-  (ok)      0.11 ms QueueTest.Push()
-  (ok)      1.09 ms QueueTest.Pipe()
+  (ok)      0.09 ms QueueTest.createInstance()
+  (ok)      0.11 ms QueueTest.push()
+  (ok)      1.09 ms QueueTest.pipe()
 ```
-
-## Spec
-
-Declaring the spec tag will notify the nole core and assigns the tasks for later use. You can also specify timeout. Default timeout is 5000 ms.
-
-```ts
-// test/queue.test.ts
-import { Spec } from 'nole';
-
-class QueueTest {
-  @Spec(10000)
-  Push() {
-    this.queue.push(10);
-  }
-}
-```
-
-> * All specs will be executed as creation order.
-> * Timing colors are defined by timeout value. If value smaller than (timeout / 5) output will be green. If value bigger than this but smaller than (timeout / 2.5); it will be yellow. In all other cases color will be red.
-
 
 ## Skip
 
-You can skip tests. (hooks will be disabled for this spec)
+You can skip tests. Make sure method name starts with skip
 
 ```ts
 // test/queue.test.ts
-import { Spec, Skip } from 'nole';
+import { Test } from "nole";
 
-class QueueTest {
-  @Skip('deprecated unit')
-  @Spec()
-  Push() {
+export class QueueTest extends Test() {
+  skip_Push() {
     this.queue.push(10);
   }
 }
 ```
 
-> * Skipping the task make it yellow colored.
-
 ```bash
 $ nole ./**/test/*.test.ts
-  (skip)              QueueTest.Push() {deprecated unit}
+  (skip)              QueueTest.skip_Push() {marked as skipped}
 ```
 
-## SkipClass
-
-You can skip whole test classes. It's equivalent of spec skipping, but you don't have to select one by one. 
-**Kindly reminder**: Dependents might require this test class and props. 
-
 ```ts
-// test/queue-skip-class.test.ts
-import { Spec, Skip, SkipClass } from 'nole';
+// test/queue.test.ts
+import { Test } from "nole";
 
-@SkipClass('No need anymore')
-class QueueTest {
-  @Spec()
-  Push() { }
-
-  @Skip('deprecated unit')
-  @Spec()
-  PushButSomehowDifferent() { }
+export class QueueTest extends Test({
+  skip: "no need",
+}) {
+  push() {
+    this.queue.push(10);
+  }
 }
 ```
 
 ```bash
 $ nole ./**/test/*.test.ts
-  (skip)              QueueTest.Push() {No need anymore}
-  (skip)              QueueTest.PushButSomehowDifferent() {deprecated unit}
+  (skip)              QueueTest.skip_Push() {no need}
 ```
-
 
 ## Dependencies
 
@@ -117,14 +82,13 @@ You can include other tests and wait them to complete.
 
 ```ts
 // test/database.test.ts
-import { Spec } from 'nole';
+import { Test } from "nole";
 
-export class Database {
+export class Database extends Test() {
   connection!: any;
 
-  @Spec() 
-  async Connect() {
-    connection = new Connection('...');
+  async connect() {
+    connection = new Connection("...");
 
     await connection.connect();
   }
@@ -133,92 +97,35 @@ export class Database {
 
 ```ts
 // test/other.test.ts
-import { Spec, Dependency } from 'nole';
-import { Database } from './database.test';
+import { Test } from "nole";
+import { Database } from "./database.test";
 
-class Other {
-  @Dependency(Database)
-  database!: Database;
-
-  @Spec() 
+export class Other extends Test({
+  dependencies: {
+    database: () => Database,
+  },
+}) {
   async DoThings() {
-    await database.connection.doStuff();
+    await this.database.connection.doStuff();
   }
 }
 ```
 
-> * All dependencies will be waited until done
-> * If dependencies cannot resolve, it will occurr an error after the available tests done.
+> - All dependencies will be waited until done
+> - If dependencies cannot resolve, it will occurr an error after the available tests done.
 
-
-## Multi Dependencies
-
-Easier way to declare dependencies by decorating class with an array.
+## Wait other tests
 
 ```ts
 // test/redis.test.ts
-import { Spec, Dependencies } from 'nole';
-import { Database } from './database.test';
-import { Other } from './other.test';
+import { Test } from "nole";
 
-@Dependencies([
-  Database,
-  Other
-])
-class Redis {
-  database: Database; // camel-case syntax
-  // even though other does not exist in this test, but nole will make sure it is completed when this test runs
-
-  @Spec() 
-  async DoThings() {
-    await database.connection.doStuff();
-  }
-}
-```
-
-## Lazy multi Dependencies / after
-
-Can solve order of execution issues
-
-```ts
-// test/redis.test.ts
-import { Spec, Dependencies, After } from 'nole';
-
-@Dependencies(() => [ B ])
-// or
-// @After(() => [ B ])
-class A {
-  b: B;
-
-  @Spec() 
-  async DoThings() { }
+export class A extends Test() {
+  async doThings() {}
 }
 
-class B {
-  @Spec() 
-  async DoThings() { }
-}
-```
-
-## Reverse dependency / dependent / before
-
-
-
-```ts
-// test/redis.test.ts
-import { Spec, Dependents, Before } from 'nole';
-
-class A {
-  b: B;
-
-  @Spec() 
-  async DoThings() { }
-}
-
-@Before(() => [ A ])
-class B {
-  @Spec() 
-  async DoThings() { }
+export class B extends Test({ before: () => [A] }) {
+  async doThings() {}
 }
 ```
 
@@ -228,161 +135,160 @@ Hooks will help you to develop helper methods.
 
 ```ts
 // test/hook.test.ts
-import { Spec, Hook, HookType } from 'nole';
+import { Test } from "nole";
 
-class HookTest {
+export class HookTest {
   value!: number;
 
-  @Hook(HookType.BeforeEach)
   async beforeEach() {
     this.value = Math.random();
   }
 
-  @Spec()
-  ValidateNumber() {
+  validateNumber() {
     if (this.value > 0.5) {
-      throw new Error('Should not be higher than 0.5');
+      throw new Error("Should not be higher than 0.5");
     }
   }
 }
 ```
-
-> * Hooks can be async tasks.
-> * Hooks do have timeout, you can change it by second parameter.
-> * If you name hook same as hook type then; When it occurr an error, It will print "class:hookType" otherwise "class.name:hoopType"
-> * Hooks cannot be spec
-> * Hooks cannot skipped
 
 ## Dynamic Tests
 
-Dynamic tests are not featured in but you can create another method and call it dynamicly.
-
-
 ```ts
 // test/dynamic.test.ts
-import { Spec } from 'nole';
+import { Test, addTest } from "nole";
 
-class DynamicTest {
-  @Spec()
-  Some() {
-    for (let i = 0; i < 10; i++) {
-      this.single(i);
+// not exported, nole cannot auto-bind this class
+class DynamicTest extends Test() {
+  test() {}
+}
+
+// adds it anyway
+addTest(() => DynamicTest);
+```
+
+```ts
+// test/dynamic2.test.ts
+import { Test, addTest } from "nole";
+
+if (something) {
+  addTest(
+    () =>
+      class Special extends Test() {
+        check() {}
+      },
+  );
+}
+```
+
+```ts
+// test/dynamic3.test.ts
+import { Test, addTest } from "nole";
+
+export class DeepTest extends Test() {
+  check() {
+    if (something) {
+      addTest(() => class Wololo extends Test() {});
     }
-  }
-
-  single(i) {
-    // ...    
   }
 }
 ```
 
-## Dependency hook
+## Test cleanup
 
-After end of the test tree, special hook will be called. Nole will follow execution order to run; first executed spec's "CleanUp" hook will be called last.
+There is a special hook that can be used to capture test finishing stage.
 
+> **Lifecycle:**
+>
+> - (class) Before
+> - - (method) BeforeEach
+> - - (method) Spec
+> - - (method) AfterEach
+> - (class) After
+> - (class) CleanUp \*called after dependency execution
 
 ```ts
 // test/database-with-cleanup.test.ts
-import { Spec, HookType, Hook } from 'nole';
+import { Test } from "nole";
 
-export class DatabaseWithCleanup {
+export class DatabaseWithCleanup extends Test() {
   connection!: any;
 
-  @Spec() 
-  async Connect() {
-    connection = new Connection('...');
+  async connect() {
+    this.connection = new Connection("...");
 
     await connection.connect();
   }
 
-  @Hook(HookType.CleanUp)
   async cleanUp() {
     this.connection.close();
-    console.log('Connection closed!');
+    console.log("Connection closed!");
   }
 }
 ```
 
 ```ts
 // test/other.test.ts
-import { Spec, Dependency } from 'nole';
-import { Database } from './database.test';
+import { Test } from "nole";
+import { Database } from "./database.test";
 
-class Other {
-  @Dependency(DatabaseWithCleanup)
-  database!: DatabaseWithCleanup;
-
-  @Spec() 
-  async DoThings() {
-    await database.connection.doStuff();
+export class Other extends Test({
+  dependencies: {
+    database: () => DatabaseWithCleanup,
+  },
+}) {
+  async doThings() {
+    await this.database.connection.doStuff();
   }
 }
 ```
 
 ```bash
 $ nole ./test/**/*.test.ts
-  (ok)      0.09 ms DatabaseWithCleanup.Connect()
-  (ok)      0.11 ms Other.DoThings()
+  (ok)      0.09 ms DatabaseWithCleanup.connect()
+  (ok)      0.11 ms Other.doThings()
 Connection closed!
 ```
 
+## Test extending
 
+If they are classes we should be able to extend them right
 
-## Assert
+```ts
+// test/extending.test.ts
+import { Test } from "nole";
 
-We do not provide assert library. You can use chai or should.js.
+// Simple is not exported, so nole wont handle it
+class Simple extends Test() {
+  value = 1;
 
-## Debugging
+  check() {
+    if (this.value !== 1) {
+      // yeah it should be 1 anyway
+    }
+  }
+}
 
-Having cleanup features with missing dependencies could lead to issues and time loses. To make sure execution of tests correct, use `-O` parameter to print out every spec and hook without calling the function. It will also print before/after hook orders.
+export class Complex extends Simple {
+  check() {
+    if (this.value > 0) {
+      // maybe it is more than just 1?
+    }
+
+    super.check(); // or
+  }
+}
+
+export class MoreComplex extends Simple {
+  moreSpecs() {
+    // mooree
+  }
+}
+```
 
 ```bash
-$ nole -O ./test/**/*.test.ts
-  (skip)             SkipAllTest.wontRun() {skip all class}
-  (skip)             SkipAllTest.wontRunToo() {wont run too}
-  (skip)             SkipAllWithoutReason.wontRun()
-   (ok)         0 ms BasicTest.checkEqual()
-   (ok)         0 ms DependencyTest.check()
-   (ok)         0 ms CleanUpLayer1Test.start()
-   (ok)         0 ms CleanUpLayer2Test.start()
-   (ok)         0 ms CleanUpLayer3Test.start()
-   (ok)         0 ms DynamicSkipTest.thisShouldBeSkipped()
-   (ok)         0 ms HookTest.pushFourIntoArray:beforeEach()
-   (ok)         0 ms HookTest.hasToBe4()
-  (skip)             HookTest.hasToBe4Again() {no need}
-   (ok)         0 ms HookTest.pushFourIntoArray:beforeEach()
-   (ok)      0.03 ms HookTest.hasToBe4AgainButNotSkipped()
-   (ok)         0 ms MultiDependency.test()
-   (ok)         0 ms CleanUpLayer3Test:cleanUp()
-   (ok)         0 ms CleanUpLayer2Test:cleanUp()
-   (ok)         0 ms CleanUpLayer1Test:cleanUp()
-   (ok)         0 ms DynamicTest.thisTestsShouldNotFail()
-   (ok)         0 ms TimeFactorTest.evaluate()
-   (ok)         0 ms TimeDifferenceTest.evaluate()
-   (ok)         0 ms ExecutorTest.evaluate()
-   (ok)         0 ms ExecutorTest.throws()
-   (ok)         0 ms ExecutorTest.timeout()
-```
-
-## Compiled files
-
-> Deprecated (v2.x+), It will always use ts-node/esm module
-
-You can run the compiled test files with `-T` option.
-
-```bash
-$ nole -T ./build/test/**/*.test.js
-  (ok)      0.09 ms QueueTest.CreateInstance()
-  (ok)      0.11 ms QueueTest.Push()
-  (ok)      1.09 ms QueueTest.Pipe()
-```
-
-> This will prevent to load ts-node register. It will be quite faster.
-
-## Environment values to configure stuff
-
-```
-NOLE_PRESERVE_CONSECUTIVE_UPPERCASE=true
-NOLE_PASCALCASE=false
-NOLE_WAIT_PERIOD=500
+$ nole ./test/**/*.test.ts
+  (ok)      0.09 ms Complex.check()
+  (ok)      0.11 ms MoreComplex.check()
+  (ok)      0.11 ms MoreComplex.moreSpecs()
 ```

@@ -1,19 +1,20 @@
-import { Spec, Dependencies } from "../src/index.js";
 import { strict as assert } from "assert";
+import { Test } from "../dist/index";
 
-export class IOTPOTest {
-  @Spec()
+export class IOTPOTest extends Test() {
   async test() {}
 }
 
-@Dependencies([IOTPOTest])
-export class MultipleUppercasedCharsTest {
-  @Spec()
+export class MultipleUppercasedCharsTest extends Test({
+  dependencies: {
+    IOTPOTest: () => IOTPOTest,
+  },
+}) {
   async check() {
     assert.notEqual(
       this["IOTPOTest"],
       undefined,
-      "turkish character test is failed"
+      "turkish character test is failed",
     );
   }
 }

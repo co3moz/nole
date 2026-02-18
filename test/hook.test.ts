@@ -1,26 +1,25 @@
 import * as assert from "assert";
-import { Spec, Hook, Skip, HookType } from "../src/index.js";
+import { Test } from "../dist/index.js";
 
-export class HookTest {
-  array: any[] = [1, 2, 3];
+export class HookTest extends Test() {
+  array: number[] = [1, 2, 3];
 
-  @Hook(HookType.BeforeEach)
-  async pushFourIntoArray() {
+  async beforeEach() {
     this.array.push(4);
   }
 
-  @Spec()
+  async afterEach() {
+    assert.equal(this.array.length, 3);
+  }
+
   async hasToBe4() {
     assert.equal(this.array.pop(), 4);
   }
 
-  @Skip("no need")
-  @Spec()
-  async hasToBe4Again() {
+  async skip_hasToBe4Again() {
     assert.equal(this.array.pop(), 4);
   }
 
-  @Spec()
   async hasToBe4AgainButNotSkipped() {
     assert.equal(this.array.pop(), 4);
   }

@@ -1,13 +1,3 @@
-export {
-  Dependency,
-  Spec,
-  Hook,
-  Skip,
-  SkipClass,
-  Dependencies,
-  Dependencies as After,
-  Dependents as Before,
-  Dependents,
-} from "./decorators.js";
-export { HookType } from "./test.js";
-export { skipTest } from "./dynamic.js";
+export { HookType } from "./test-wrap.js";
+export { Test } from "./core.js";
+export { skipTest, getTest, addTest } from "./dynamic.js";

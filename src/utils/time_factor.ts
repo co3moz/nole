@@ -1,6 +1,4 @@
-import * as clrs from "colors/safe.js";
-
-const colors = (clrs as any).default;
+import { colors } from "../const.js";
 
 export function TimeFactor(diff: number, timeout: number) {
   if (diff < timeout / 5) {

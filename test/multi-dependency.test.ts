@@ -1,6 +1,4 @@
 import * as assert from "assert";
-import { Dependencies, Spec } from "../src/index.js";
-import { BasicTest } from "./basic.test.js";
 import {
   CleanUpLayer1Test,
   CleanUpLayer2Test,
@@ -8,38 +6,38 @@ import {
 } from "./clean-up.test.js";
 import { DynamicSkipTest } from "./dynamic-skip.test.js";
 import { HookTest } from "./hook.test.js";
+import { Test } from "../dist/index.js";
+import { DependencyTest } from "./basic.test.js";
 
-@Dependencies(() => [
-  BasicTest,
-  CleanUpLayer1Test,
-  CleanUpLayer2Test,
-  CleanUpLayer3Test,
-  DynamicSkipTest,
-  HookTest,
-  MultiDependency,
-])
-export class MultiLazyDependency {
-  basicTest: BasicTest;
+export class MultiLazyDependency extends Test({
+  dependencies: {
+    dependencyTest: () => DependencyTest,
 
-  @Spec()
+    c1: () => CleanUpLayer1Test,
+    c2: () => CleanUpLayer2Test,
+    c3: () => CleanUpLayer3Test,
+    c4: () => DynamicSkipTest,
+    c5: () => HookTest,
+    c6: () => MultiDependency,
+  },
+}) {
   test() {
-    assert.strictEqual(this.basicTest.variable, 1);
+    assert.strictEqual(this.dependencyTest.basicTest.variable, 1);
   }
 }
 
-@Dependencies([
-  BasicTest,
-  CleanUpLayer1Test,
-  CleanUpLayer2Test,
-  CleanUpLayer3Test,
-  DynamicSkipTest,
-  HookTest,
-])
-export class MultiDependency {
-  basicTest: BasicTest;
+export class MultiDependency extends Test({
+  dependencies: {
+    dependencyTest: () => DependencyTest,
 
-  @Spec()
+    c1: () => CleanUpLayer1Test,
+    c2: () => CleanUpLayer2Test,
+    c3: () => CleanUpLayer3Test,
+    c4: () => DynamicSkipTest,
+    c5: () => HookTest,
+  },
+}) {
   test() {
-    assert.strictEqual(this.basicTest.variable, 1);
+    assert.strictEqual(this.dependencyTest.basicTest.variable, 1);
   }
 }

@@ -1,6 +1,6 @@
 export function Executor(fn: Function, timeout: number): Promise<void> {
   return new Promise(async (resolve, reject) => {
-    let _timeout = null;
+    let _timeout: NodeJS.Timeout | null = null;
 
     try {
       let expectPromise = fn();

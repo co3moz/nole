@@ -1,50 +1,46 @@
-import { Spec, Dependency, Hook, HookType } from "../src/index.js";
+import { Test } from "../dist/index";
 
-export class CleanUpLayer1Test {
+export class CleanUpLayer1Test extends Test() {
   data: any;
 
-  @Spec()
   async start() {
     this.data = { somethingImportant: 1 };
   }
 
-  @Hook(HookType.CleanUp)
   async cleanUp() {
     this.data = null;
     console.log("layer 1 clean up completed!");
   }
 }
 
-export class CleanUpLayer2Test {
+export class CleanUpLayer2Test extends Test({
+  dependencies: {
+    previousLayer: () => CleanUpLayer1Test,
+  },
+}) {
   data: any;
 
-  @Dependency(CleanUpLayer1Test)
-  previousLayer!: any;
-
-  @Spec()
   async start() {
     this.data = { somethingImportant: 1 };
   }
 
-  @Hook(HookType.CleanUp)
   async cleanUp() {
     this.data = null;
     console.log("layer 2 clean up completed!");
   }
 }
 
-export class CleanUpLayer3Test {
+export class CleanUpLayer3Test extends Test({
+  dependencies: {
+    previousLayer: () => CleanUpLayer2Test,
+  },
+}) {
   data: any;
 
-  @Dependency(CleanUpLayer2Test)
-  previousLayer!: any;
-
-  @Spec()
   async start() {
     this.data = { somethingImportant: 1 };
   }
 
-  @Hook(HookType.CleanUp)
   async cleanUp() {
     this.data = null;
     console.log("layer 3 clean up completed!");

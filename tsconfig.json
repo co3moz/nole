@@ -1,17 +1,15 @@
 {
   "compilerOptions": {
     "target": "es2020",
-    "module": "es2020",
-    "moduleResolution": "node",
+    "module": "node16",
+    "moduleResolution": "node16",
     "lib": ["es2020", "esnext"],
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true,
     "outDir": "dist",
-    "removeComments": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "useDefineForClassFields": false
+    "strictNullChecks": true,
+    "inlineSourceMap": true,
+    "verbatimModuleSyntax": true
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]

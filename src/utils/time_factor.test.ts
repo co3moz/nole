@@ -1,8 +1,7 @@
-import { Spec } from "../index.js";
+import { Test } from "../index.js";
 import { Delay, TimeFactor } from "./time_factor.js";
 
-export class TimeFactorTest {
-  @Spec()
+export class TimeFactorTest extends Test() {
   async evaluate() {
     await Delay(1);
 
