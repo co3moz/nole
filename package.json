@@ -1,6 +1,6 @@
 {
   "name": "nole",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "type": "module",
   "description": "Testing Library for Typescript projects",
   "main": "dist/index.js",
@@ -14,8 +14,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "node ./bin/nole.js ./test/**/*.test.ts ./src/**/*.test.ts",
-    "coverage": "c8 npm run test"
+    "test": "node ./bin/nole.js './test/**/*.test.ts' './src/**/*.test.ts'",
+    "coverage": "c8 node ./bin/nole.js './test/**/*.test.ts' './src/**/*.test.ts'"
   },
   "keywords": [
     "typescript",
@@ -52,7 +52,8 @@
       "src/**/*.ts"
     ],
     "exclude": [
-      "**/*.test.ts"
+      "**/*.test.ts",
+      "dist/**"
     ]
   }
 }

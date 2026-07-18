@@ -1,1 +1,1 @@
-export const TEST_CLASS_KEY = Symbol("TEST_CLASS_KEY");
+export const TEST_CLASS_KEY = Symbol.for("nole.TEST_CLASS_KEY");
