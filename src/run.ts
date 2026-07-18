@@ -172,6 +172,10 @@ function specDetection(test: TestWrap) {
       continue;
     }
 
+    if (key.startsWith(process.env.SPEC_SKIP_PREFIX ?? "_")) {
+      continue;
+    }
+
     let lowerKey = key.toLowerCase();
 
     if (lowerKey.startsWith("skip")) {
