@@ -6,6 +6,7 @@ import path from "path";
 import fs from "fs";
 import colors from "colors/safe.js";
 import { register } from "tsx/esm/api";
+import { require as tsxRequire } from "tsx/cjs/api";
 const unregister = register();
 
 import { TimeDifference } from "../dist/utils/time_difference.js";
@@ -44,7 +45,12 @@ if (!program.args.length) {
       const tests = new Set();
 
       for (const file of fileList) {
-        const module = await import(`file://${file}`);
+        // ESM files are loaded with import(); CommonJS files (their nearest
+        // package.json is not "type": "module") are loaded with require(), so
+        // nole can run in CommonJS environments too.
+        const module = isEsmFile(file)
+          ? await import(`file://${file}`)
+          : tsxRequire(file, import.meta.url);
 
         for (const key in module) {
           const value = module[key];
@@ -107,4 +113,29 @@ if (!program.args.length) {
 
 function failed(message) {
   console.error(colors.bold(colors.red(" (failed) " + message)));
+}
+
+// Mirrors Node's own resolution: explicit extensions win, otherwise the nearest
+// package.json "type" decides. Missing/other type means CommonJS.
+function isEsmFile(file) {
+  if (file.endsWith(".mts") || file.endsWith(".mjs")) return true;
+  if (file.endsWith(".cts") || file.endsWith(".cjs")) return false;
+
+  let dir = path.dirname(file);
+
+  while (true) {
+    const pkgPath = path.join(dir, "package.json");
+
+    if (fs.existsSync(pkgPath)) {
+      try {
+        return JSON.parse(fs.readFileSync(pkgPath).toString()).type === "module";
+      } catch {
+        return false;
+      }
+    }
+
+    const parent = path.dirname(dir);
+    if (parent === dir) return false;
+    dir = parent;
+  }
 }
