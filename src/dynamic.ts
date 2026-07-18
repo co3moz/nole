@@ -11,8 +11,20 @@ export function skipTest(reason?: string): never {
   throw new NoleManualSkip(reason);
 }
 
+export function skipClass(reason?: string): never {
+  throw new NoleManualClassSkip(reason);
+}
+
 class NoleManualSkip extends Error {
   _nole_anchor = 1;
+
+  constructor(public reason?: string) {
+    super(`Dynamicly skipped! ${reason}`);
+  }
+}
+
+class NoleManualClassSkip extends Error {
+  _nole_anchor = 2;
 
   constructor(public reason?: string) {
     super(`Dynamicly skipped! ${reason}`);

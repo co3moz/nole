@@ -24,10 +24,13 @@ export async function handleSpecs(test: TestWrap) {
       let reason = shouldPropertySkip
         ? test.skip.get(propertyKey)!.reason
         : test.skipClass!.reason;
+
+      const hasOrigin = !!test.skipClass?.origin;
+      const TEXT = hasOrigin ? DYNAMIC_SKIP_TEXT : SKIP_TEXT;
       console.log(
-        `${SKIP_TEXT} ${" ".repeat(9)} ${testName}() ${
+        `${TEXT} ${" ".repeat(hasOrigin ? 8 : 9)} ${testName}() ${
           reason ? "{" + reason + "}" : ""
-        }`,
+        }${hasOrigin ? `\n${" ".repeat(22)}↳ skip came from ${test.skipClass?.origin}` : ``}`,
       );
       continue;
     }
@@ -46,8 +49,18 @@ export async function handleSpecs(test: TestWrap) {
 
       console.log(`${OK_TEXT} ${timeText} ${testName}()`);
     } catch (e) {
-      if ((e as any)?._nole_anchor) {
+      const anchor = (e as any)?._nole_anchor;
+      if (anchor === 1) {
         let reason = (e as any).reason;
+        console.log(
+          `${DYNAMIC_SKIP_TEXT} ${" ".repeat(8)} ${testName}() ${
+            reason ? "{" + reason + "}" : ""
+          }`,
+        );
+        continue;
+      } else if (anchor === 2) {
+        let reason = (e as any).reason;
+        test.skipClass = { reason, origin: "." + propertyKey };
         console.log(
           `${DYNAMIC_SKIP_TEXT} ${" ".repeat(8)} ${testName}() ${
             reason ? "{" + reason + "}" : ""

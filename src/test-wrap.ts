@@ -14,6 +14,7 @@ export interface IHook {
 
 export interface ISkip {
   reason: string;
+  origin?: string;
 }
 
 // Old code, but works fine, so I won't change it for now
