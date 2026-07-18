@@ -74,25 +74,23 @@ export function updateInformationForClass(
   }
 
   test.dependencies = config.dependencies
-    ? Array.from(
-        config.dependencies.entries().map(([key, dep]) => {
-          const actual = dep();
-          let testWrap = tests.get(actual);
+    ? Array.from(config.dependencies.entries()).map(([key, dep]) => {
+        const actual = dep();
+        let testWrap = tests.get(actual);
 
-          if (!testWrap) {
-            testWrap = new TestWrap(actual);
-            tests.set(actual, testWrap);
-            allTests.set(actual, testWrap);
-          }
+        if (!testWrap) {
+          testWrap = new TestWrap(actual);
+          tests.set(actual, testWrap);
+          allTests.set(actual, testWrap);
+        }
 
-          testWrap.dependents.push(test);
+        testWrap.dependents.push(test);
 
-          return {
-            propertyKey: key,
-            dependency: testWrap,
-          };
-        }),
-      )
+        return {
+          propertyKey: key,
+          dependency: testWrap,
+        };
+      })
     : [];
 
   if (config.before) {
