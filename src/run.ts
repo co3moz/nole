@@ -67,7 +67,7 @@ export function updateInformationForClass(
   test: TestWrap,
   tests: Map<new () => BaseTest, TestWrap>,
 ) {
-  const config = target[TEST_CLASS_KEY] as TestClassInfo;
+  const config = (target as typeof BaseTest)[TEST_CLASS_KEY] as TestClassInfo;
 
   if (config.skip) {
     test.skipClass = { reason: config.skip };

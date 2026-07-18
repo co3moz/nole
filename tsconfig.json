@@ -4,9 +4,11 @@
     "module": "node16",
     "moduleResolution": "node16",
     "lib": ["es2020", "esnext"],
+    "types": ["node"],
     "declaration": true,
     "declarationMap": true,
     "outDir": "dist",
+    "rootDir": "./src",
     "strictNullChecks": true,
     "inlineSourceMap": true,
     "verbatimModuleSyntax": true

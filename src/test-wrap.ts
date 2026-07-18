@@ -32,7 +32,7 @@ export class TestWrap {
   config: TestClassInfo;
 
   constructor(public target: new () => BaseTest) {
-    this.config = target[TEST_CLASS_KEY];
+    this.config = (target as typeof BaseTest)[TEST_CLASS_KEY];
   }
 
   get name() {

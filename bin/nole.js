@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import program from "commander";
+import { program } from "commander";
 import { glob } from "glob";
 import path from "path";
 import fs from "fs";
@@ -18,7 +18,11 @@ const pkg = JSON.parse(
   fs.readFileSync(new URL("../package.json", import.meta.url)).toString(),
 );
 
-program.usage("<glob> ...").version(pkg.version).parse(process.argv);
+program
+  .usage("<glob> ...")
+  .allowExcessArguments(true)
+  .version(pkg.version)
+  .parse(process.argv);
 
 if (!program.args.length) {
   program.help();
