@@ -25,7 +25,6 @@
   "author": "co3moz",
   "license": "MIT",
   "dependencies": {
-    "camelcase": "^9.0.0",
     "colors": "^1.4.0",
     "commander": "^15.0.0",
     "glob": "^13.0.6"
