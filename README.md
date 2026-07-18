@@ -76,6 +76,103 @@ $ nole ./**/test/*.test.ts
   (skip)              QueueTest.skip_Push() {no need}
 ```
 
+## Dynamic Skip
+
+Sometimes you only know at runtime whether a test should run. Call `skipTest()`
+inside a spec to skip just that spec.
+
+```ts
+// test/queue.test.ts
+import { Test, skipTest } from "nole";
+
+export class QueueTest extends Test() {
+  push() {
+    if (!process.env.QUEUE_URL) {
+      skipTest("QUEUE_URL is not set");
+    }
+
+    this.queue.push(10);
+  }
+}
+```
+
+```bash
+$ nole ./test/**/*.test.ts
+  (dskip)          QueueTest.push() {QUEUE_URL is not set}
+```
+
+### Skipping the whole class
+
+Use `skipClass()` to dynamically skip every remaining spec of the class. This is
+handy inside the `before` hook, so an unmet precondition skips the entire class
+instead of failing.
+
+```ts
+// test/queue.test.ts
+import { Test, skipClass } from "nole";
+
+export class QueueTest extends Test() {
+  async before() {
+    if (!process.env.QUEUE_URL) {
+      skipClass("QUEUE_URL is not set");
+    }
+  }
+
+  push() {
+    this.queue.push(10);
+  }
+
+  async pipe() {
+    await this.queue.pipe(somewhere);
+  }
+}
+```
+
+```bash
+$ nole ./test/**/*.test.ts
+  (dskip)          QueueTest:before() {QUEUE_URL is not set}
+  (dskip)          QueueTest.push()
+                        ↳ skip came from :before
+  (dskip)          QueueTest.pipe()
+                        ↳ skip came from :before
+```
+
+> You can also call `skipClass()` from a spec — every spec that hasn't run yet
+> will be skipped, and the report shows where the skip came from.
+>
+> Calling `skipTest()` inside `before` is an error; you probably meant
+> `skipClass()`.
+
+## Internal functions
+
+Nole treats every method as a spec by default. If you need a plain helper method
+that Nole should not run as a spec, prefix its name with `_`.
+
+```ts
+// test/queue.test.ts
+import { Test } from "nole";
+
+export class QueueTest extends Test() {
+  async _connect() {
+    // not a spec, just a helper you call yourself
+    return new Connection("...");
+  }
+
+  async push() {
+    const conn = await this._connect();
+    conn.push(10);
+  }
+}
+```
+
+```bash
+$ nole ./test/**/*.test.ts
+  (ok)      0.11 ms QueueTest.push()
+```
+
+> The prefix is configurable via the `SPEC_SKIP_PREFIX` environment variable
+> (defaults to `_`).
+
 ## Dependencies
 
 You can include other tests and wait them to complete.
