@@ -2,13 +2,7 @@
 
 # Nole
 
-Nole is a testing platform just like mocha..
-
-> Breaking change at nole v3, plain old classes are better at this task.
-
-> Use nole 2.x for ESM and Typescript.
-
-> Use nole 1.x for CommonJS. (ability to disable Typescript with -T option)
+Nole is a testing platform just like mocha.. Feels simple, works really well.
 
 ```ts
 // test/queue.test.ts
@@ -389,4 +383,92 @@ $ nole ./test/**/*.test.ts
   (ok)      0.09 ms Complex.check()
   (ok)      0.11 ms MoreComplex.check()
   (ok)      0.11 ms MoreComplex.moreSpecs()
+```
+
+### Execution order
+
+Inherited specs run parent-first, so a child can rely on the state left behind
+by its ancestors.
+
+```ts
+// test/inheritance.test.ts
+import * as assert from "assert";
+import { Test } from "nole";
+
+export class GrandparentTest extends Test() {
+  variable = 1;
+
+  async doesSomething() {
+    assert.equal(this.variable, 1);
+    this.variable = 2;
+  }
+}
+
+export class FatherTest extends GrandparentTest {
+  async doesSomethingElse() {
+    assert.equal(this.variable, 2);
+    this.variable = 3;
+  }
+}
+
+export class ChildTest extends FatherTest {
+  async doesMoreStuff() {
+    assert.equal(this.variable, 3);
+    this.variable = 4;
+  }
+}
+```
+
+```bash
+$ nole ./test/**/*.test.ts
+  (ok)      0.09 ms ChildTest.doesSomething()
+  (ok)      0.10 ms ChildTest.doesSomethingElse()
+  (ok)      0.11 ms ChildTest.doesMoreStuff()
+```
+
+### Inheriting behavior
+
+Skips and hooks are inherited too. A `skipClass()` defined on a base class skips
+every subclass that reaches it, and an overridden hook can call `super` to keep
+the parent's setup.
+
+```ts
+// test/inheritance.test.ts
+import { Test, skipClass } from "nole";
+
+// not exported, only used as a base
+class CompanyTest extends Test() {
+  async noWorkingAllowed() {
+    skipClass("no working allowed");
+  }
+}
+
+export class EmployeeTest extends CompanyTest {
+  async work() {
+    // never runs, the class is skipped
+  }
+}
+
+class HookInitialTest extends Test() {
+  variable = 1;
+
+  before() {
+    this.variable = 2;
+  }
+
+  test() {
+    assert.equal(this.variable, 2);
+  }
+}
+
+export class HookOverrideTest extends HookInitialTest {
+  before() {
+    super.before(); // keep the parent's setup
+    this.variable = 10;
+  }
+
+  test() {
+    assert.equal(this.variable, 10);
+  }
+}
 ```

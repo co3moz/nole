@@ -212,17 +212,22 @@ function specDetection(test: TestWrap) {
   }
 }
 
-function getAllMethods(instance) {
-  let props = new Set();
+function getAllMethods(instance: any): string[] {
+  let props = new Set<string>();
   let currentObj = instance;
+  let stack: any[] = [];
 
   while (currentObj && currentObj !== Object.prototype) {
-    Object.getOwnPropertyNames(currentObj).forEach((prop) => {
-      if (typeof currentObj[prop] === "function" && prop !== "constructor") {
+    stack.push(currentObj);
+    currentObj = Object.getPrototypeOf(currentObj);
+  }
+  while (stack.length > 0) {
+    let obj = stack.pop(); // En üstteki (A.prototype) ilk çıkar
+    Object.getOwnPropertyNames(obj).forEach((prop) => {
+      if (typeof obj[prop] === "function" && prop !== "constructor") {
         props.add(prop);
       }
     });
-    currentObj = Object.getPrototypeOf(currentObj);
   }
 
   return Array.from(props);
