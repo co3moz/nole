@@ -140,8 +140,9 @@ $ nole ./test/**/*.test.ts
 > You can also call `skipClass()` from a spec — every spec that hasn't run yet
 > will be skipped, and the report shows where the skip came from.
 >
-> Calling `skipTest()` inside `before` is an error; you probably meant
-> `skipClass()`.
+> `skipClass()` can only be used inside specs and the `before` hook. Hooks
+> cannot be skipped — calling `skipTest()` inside `before` is an error; you
+> probably meant `skipClass()`.
 
 ## Internal functions
 
