@@ -475,29 +475,40 @@ export class HookOverrideTest extends HookInitialTest {
 
 ## CommonJS support
 
-Nole itself ships as ESM, but it can run test files from CommonJS projects too.
-Each file is loaded with the loader that matches its own module format: ESM files
-via `import()`, CommonJS files via `require()`. The format is decided the same
-way Node decides it — `.mts`/`.cts` win by extension, otherwise the nearest
-`package.json` `type` field is used.
+Nole ships both an ESM and a CommonJS build, wired up through the package
+`exports` map. Use whichever your project speaks — `import` gets the ESM build,
+`require` gets the CommonJS one:
 
-So a CommonJS package (a `package.json` without `"type": "module"`) just works:
-
-```ts
-// test/commonjs/common.test.ts
-import { Test } from "nole";
-
-export class CommonJSTest extends Test() {
-  async check() {
-    console.log("It works");
-  }
-}
+```js
+import { Test } from "nole"; // ESM
+const { Test } = require("nole"); // CommonJS
 ```
 
+You don't even need TypeScript. A plain CommonJS `.js` test file works:
+
+```js
+// test/commonjs/require.test.js
+const { Test } = require("nole");
+
+exports.CommonJSTest = class CommonJSTest extends Test() {
+  async check() {
+    console.log("It works from CommonJS");
+  }
+};
+```
+
+When discovering tests, nole loads each file with the loader that matches its own
+module format: ESM files via `import()`, CommonJS files via `require()`. The
+format is decided the same way Node decides it — `.mts`/`.cts` win by extension,
+otherwise the nearest `package.json` `type` field is used. So ESM and CommonJS
+test files can even live side by side in one run:
+
 ```bash
-$ nole './test/**/*.test.ts'
+$ nole './test/**/*.test.{ts,js}'
+  (ok)      0.11 ms QueueTest.push()
   (ok)      0.58 ms CommonJSTest.check()
 ```
 
-> Quote your globs (`'./test/**/*.test.ts'`) so nole expands them itself instead
-> of relying on the shell — this keeps discovery consistent across environments.
+> Quote your globs (`'./test/**/*.test.{ts,js}'`) so nole expands them itself
+> instead of relying on the shell — this keeps discovery consistent across
+> environments.
