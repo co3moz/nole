@@ -3,8 +3,17 @@
   "version": "3.2.0",
   "type": "module",
   "description": "Testing Library for Typescript projects",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/cjs/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/co3moz/nole"
@@ -13,7 +22,9 @@
     "nole": "./bin/nole.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "npm run build:esm && npm run build:cjs",
+    "build:esm": "tsc",
+    "build:cjs": "tsc -p tsconfig.cjs.json && node ./scripts/cjs-package.mjs",
     "test": "node ./bin/nole.js './test/**/*.test.{ts,js}' './src/**/*.test.ts'",
     "coverage": "c8 node ./bin/nole.js './test/**/*.test.ts' './src/**/*.test.ts'"
   },

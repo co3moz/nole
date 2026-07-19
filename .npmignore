@@ -1,4 +1,11 @@
 test
 src
+scripts
 coverage
 .vscode
+.github
+tsconfig.json
+tsconfig.cjs.json
+dist/**/*.test.js
+dist/**/*.test.d.ts
+dist/**/*.test.d.ts.map
