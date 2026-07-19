@@ -1,4 +1,5 @@
-import { TEST_CLASS_KEY } from "./symbol.js";
+import { TEST_CLASS_KEY, TEST_INSTANCE_INFO } from "./symbol.js";
+import type { TestWrap } from "./test-wrap.js";
 
 export interface TestClassInfo {
   dependencies?: Map<string, () => new () => BaseTest>;
@@ -9,6 +10,8 @@ export interface TestClassInfo {
 }
 
 export class BaseTest {
+  [TEST_INSTANCE_INFO]!: TestWrap;
+
   static [TEST_CLASS_KEY]: TestClassInfo = {
     dependencies: new Map(),
     timeout: 5000,

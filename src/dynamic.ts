@@ -5,6 +5,7 @@ import {
   getTestMap,
   updateInformationForClass,
 } from "./run.js";
+import { TEST_CLASS_KEY, TEST_INSTANCE_INFO } from "./symbol.js";
 import { TestWrap } from "./test-wrap.js";
 
 export function skipTest(reason?: string): never {
@@ -13,6 +14,12 @@ export function skipTest(reason?: string): never {
 
 export function skipClass(reason?: string): never {
   throw new NoleManualClassSkip(reason);
+}
+
+export function isSkipped(instance: BaseTest) {
+  const info = instance[TEST_INSTANCE_INFO];
+
+  return !!info?.skip;
 }
 
 class NoleManualSkip extends Error {

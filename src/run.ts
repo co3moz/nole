@@ -1,6 +1,6 @@
 import { HookType, TestWrap } from "./test-wrap.js";
 import { BaseTest, type TestClassInfo } from "./core.js";
-import { TEST_CLASS_KEY } from "./symbol.js";
+import { TEST_CLASS_KEY, TEST_INSTANCE_INFO } from "./symbol.js";
 import { handleBeforeHooks } from "./handle/before-hooks.js";
 import { handleSpecs } from "./handle/specs.js";
 import { handleAfterHooks } from "./handle/after-hooks.js";
@@ -153,6 +153,8 @@ function pickNext(tests: Map<new () => BaseTest, TestWrap>) {
 export function createInstanceIfNotExists(test: TestWrap) {
   if (!test.testInstance) {
     const instance = new test.target();
+
+    instance[TEST_INSTANCE_INFO] = test;
 
     test.testInstance = instance;
   }
