@@ -1,55 +1,36 @@
 import { HookType, TestWrap } from "../test-wrap.js";
-import { Executor } from "../utils/executor.js";
-import { TimeDifference } from "../utils/time_difference.js";
-import { TimeFactor } from "../utils/time_factor.js";
-import {
-  colors,
-  DEFAULT_TIMEOUT,
-  HOOK_FAILED_TEXT,
-  OK_TEXT,
-} from "../const.js";
+import type { RunContext } from "../context.js";
+import { runHooks } from "./hooks.js";
 
-export async function handleCleanUp(test: TestWrap) {
-  const timeout = test.config.timeout ?? DEFAULT_TIMEOUT;
-
+/**
+ * Cleans a class up once every dependent is done with it, then walks down to
+ * its own dependencies. `force` skips the dependent check, which is what the
+ * final sweep uses after a failed or interrupted run.
+ */
+export async function handleCleanUp(
+  test: TestWrap,
+  ctx: RunContext,
+  force = false,
+) {
   if (test.cleanUpCalled) return;
+  if (!test.testInstance) return;
+  // a class that --grep excluded never opened anything to close
+  if (test.excluded) return;
+
   if (
+    !force &&
     !test.dependents.every(
       (dependent) => dependent.isFinished && dependent.cleanUpCalled,
     )
-  )
+  ) {
     return;
+  }
 
   test.cleanUpCalled = true;
 
-  for (let [propertyKey, hook] of test.hooks.entries()) {
-    if (hook.type != HookType.CleanUp) continue;
+  await runHooks(test, ctx, HookType.CleanUp);
 
-    let hookName = colors.bold(
-      colors.yellow(
-        test.name +
-          (propertyKey != "cleanUp" ? `.${propertyKey}:cleanUp` : ":cleanUp"),
-      ),
-    );
-    let start = TimeDifference.begin();
-
-    try {
-      await Executor(
-        test.testInstance[propertyKey].bind(test.testInstance),
-        timeout,
-      );
-
-      let timeText = TimeFactor(start.end(), timeout);
-
-      console.log(`${OK_TEXT} ${timeText} ${hookName}()`);
-    } catch (e) {
-      console.error(`${HOOK_FAILED_TEXT} ${hookName}()`);
-      console.error((e as any)?.stack ?? e);
-      throw e;
-    }
-  }
-
-  for (let tree of test.dependencies) {
-    await handleCleanUp(tree.dependency);
+  for (const tree of test.dependencies) {
+    await handleCleanUp(tree.dependency, ctx, force);
   }
 }

@@ -25,6 +25,16 @@ export class TestWrap {
   skipClass: ISkip | null = null;
   specs = new Map<string, ISpec>();
   hooks = new Map<string, IHook>();
+  /** spec names rejected by --grep */
+  filtered = new Set<string>();
+  /** why the rest of the class cannot run, set when a hook fails */
+  blocked: string | null = null;
+  /** the whole class was filtered out, it never gets instantiated or run */
+  excluded: boolean = false;
+  /** dependency edges have already been built for this class */
+  extracted: boolean = false;
+  /** the run loop already picked this class up, it must not be queued again */
+  started: boolean = false;
   isFinished: boolean = false; // cleanup ignored
   cleanUpCalled: boolean = false;
   testInstance: any;

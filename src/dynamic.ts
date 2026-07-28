@@ -8,6 +8,8 @@ import {
 import { TEST_CLASS_KEY, TEST_INSTANCE_INFO } from "./symbol.js";
 import { TestWrap } from "./test-wrap.js";
 
+export { setExecutionTimeout as timeout } from "./utils/executor.js";
+
 export function skipTest(reason?: string): never {
   throw new NoleManualSkip(reason);
 }
@@ -66,7 +68,9 @@ export function addTest<T extends BaseTest>(test: () => new () => T) {
   remainingTests.set(testClass, testWrap);
   testMap.set(testClass, testWrap);
 
-  updateInformationForClass(testClass, testWrap, testMap);
+  // dependencies discovered here have to join the same queue, otherwise they
+  // would never be scheduled
+  updateInformationForClass(testClass, testWrap, remainingTests);
 
   return true;
 }

@@ -26,11 +26,171 @@ export class QueueTest extends Test() {
 ```
 
 ```bash
-$ nole ./test/**/*.test.ts
+$ nole './test/**/*.test.ts'
   (ok)      0.09 ms QueueTest.createInstance()
   (ok)      0.11 ms QueueTest.push()
   (ok)      1.09 ms QueueTest.pipe()
+
+  3 passed  (1.29 ms)
 ```
+
+A failing spec does not stop the run. Everything else still executes, every
+`cleanUp` hook still runs, and the failures are collected into a summary at the
+end. The process exits with `1` if anything failed.
+
+```bash
+$ nole './test/**/*.test.ts'
+  (ok)      0.09 ms QueueTest.createInstance()
+ (failed)   0.11 ms QueueTest.push()
+           Error: queue is full
+  (ok)      1.09 ms QueueTest.pipe()
+
+  Failures:
+
+  1) QueueTest.push()
+     Error: queue is full
+         at QueueTest.push (test/queue.test.ts:19:11)
+
+  2 passed, 1 failed  (1.29 ms)
+```
+
+Use `--bail` when you would rather stop at the first failure.
+
+## Command line
+
+```
+nole <glob> ... [options]
+
+  -b, --bail                 stop as soon as something fails
+  -t, --grep <pattern>       only run specs matching ClassName.specName,
+                             /regex/ is supported
+      --timeout <ms>         override the timeout of every spec and hook
+      --retries <n>          extra attempts before a failing spec is reported
+  -c, --concurrency <n>      how many test classes may run at once
+  -r, --reporter <name>      spec, dot, json, tap or junit
+      --report <name:file>   also write a report to a file, repeatable
+  -s, --setup <file>         load a file before discovery, repeatable
+      --config <file>        path to a nole config file
+      --no-config            ignore any nole.config.* file
+      --wait <ms>            delay before the run, for late dynamic tests
+      --spec-skip-prefix <p> methods with this prefix are helpers
+  -w, --watch                rerun when a file changes
+      --coverage             run the suite through c8
+      --no-color             disable coloured output
+```
+
+> Quote your globs (`'./test/**/*.test.{ts,js}'`) so nole expands them itself
+> instead of relying on the shell — this keeps discovery consistent across
+> environments.
+
+> `--wait` defaults to `0`. Tests registered with `addTest()` while a module is
+> being imported are picked up without it; raise it (or set `NOLE_WAIT_PERIOD`)
+> only if something in your setup registers tests later than that.
+
+### Config file
+
+Put a `nole.config.ts` (or `.js`, `.mjs`, `.cjs`) next to your `package.json`
+and nole picks it up on its own. Every key matches a flag, and the flag wins.
+
+```ts
+// nole.config.ts
+import { defineConfig } from "nole";
+
+export default defineConfig({
+  globs: ["./test/**/*.test.ts"],
+  timeout: 10_000,
+  retries: 1,
+  reports: [{ name: "junit", file: "./reports/results.xml" }],
+});
+```
+
+```bash
+$ nole
+```
+
+### Running one test
+
+```bash
+$ nole './test/**/*.test.ts' --grep 'QueueTest.push'
+```
+
+Classes the matched specs depend on still run in full — they are what set up
+the state the matched spec needs. Everything else is reported as `filtered`.
+
+> Working out which specs exist means constructing every discovered class, so
+> `--grep` runs the constructors even of classes it ends up filtering out. Their
+> hooks and specs are never touched.
+
+### Reporters
+
+`--reporter` chooses what goes to stdout, `--report` writes extra copies to
+files, so a CI run can stay readable and still produce a machine readable
+artifact:
+
+```bash
+$ nole './test/**/*.test.ts' --reporter dot --report junit:reports/results.xml
+```
+
+Writing your own is a matter of implementing `Reporter`, or extending
+`BaseReporter` and overriding only the events you care about:
+
+```ts
+import { BaseReporter, type SpecResult } from "nole";
+
+export class SlackReporter extends BaseReporter {
+  specResult(result: SpecResult) {
+    if (result.status === "failed") {
+      notify(`${result.className}.${result.specName} failed`);
+    }
+  }
+}
+```
+
+### Running classes in parallel
+
+Test classes with no dependency between them can run at the same time. The
+dependency graph is still respected, and the output of each class is buffered so
+it stays readable.
+
+```bash
+$ nole './test/**/*.test.ts' --concurrency 4
+```
+
+> Specs inside one class always run in order — they share an instance.
+
+Not every class survives having company. One that touches the working
+directory, an environment variable, a fixed port or any other process wide
+resource can be marked `exclusive`, and the runner gives it the lane to itself:
+
+```ts
+// test/migration.test.ts
+import { Test } from "nole";
+
+export class MigrationTest extends Test({ exclusive: true }) {
+  async migrates() {
+    process.chdir(this.workspace); // nothing else may be running right now
+  }
+}
+```
+
+Nole waits for whatever is in flight to finish, runs the exclusive class on its
+own, and then goes back to normal. The flag costs nothing at `--concurrency 1`,
+so it is safe to add as soon as you know a class needs it rather than after a
+parallel run starts failing.
+
+### Retrying flaky specs
+
+```bash
+$ nole './test/**/*.test.ts' --retries 2
+```
+
+```ts
+// or per class, which is usually the honest place for it
+export class NetworkTest extends Test({ retries: 2 }) {}
+```
+
+A spec that only passes on a later attempt is reported as flaky instead of
+being silently green.
 
 ## Skip
 
@@ -165,8 +325,45 @@ $ nole ./test/**/*.test.ts
   (ok)      0.11 ms QueueTest.push()
 ```
 
-> The prefix is configurable via the `SPEC_SKIP_PREFIX` environment variable
-> (defaults to `_`).
+> The prefix is configurable with `--spec-skip-prefix` or the
+> `SPEC_SKIP_PREFIX` environment variable (defaults to `_`).
+
+## Timeouts
+
+Every spec and hook gets `5000 ms` by default. Change it per class, for the
+whole run with `--timeout`, or from inside a spec when you only find out at
+runtime that something is going to take a while:
+
+```ts
+// test/upload.test.ts
+import { Test, timeout } from "nole";
+
+export class UploadTest extends Test({ timeout: 10_000 }) {
+  async uploadsABigFile() {
+    timeout(60_000); // counting restarts from here
+
+    await upload(bigFile);
+  }
+}
+```
+
+## Hook failures
+
+A failing hook no longer takes the whole run down with it. The failure is
+reported, the specs that cannot run any more are marked as blocked, and the run
+moves on to the next class:
+
+```bash
+$ nole './test/**/*.test.ts'
+ (failed)   0.11 ms QueueTest:before()
+           Error: could not reach the queue
+ (block)             QueueTest.push() {before hook failed}
+ (block)             QueueTest.pipe() {before hook failed}
+  (ok)      0.09 ms OtherTest.stillRuns()
+```
+
+`cleanUp` runs regardless — after a failure, after `--bail`, and after ctrl+c —
+so connections do not stay open when a run goes wrong.
 
 ## Dependencies
 
@@ -509,6 +706,19 @@ $ nole './test/**/*.test.{ts,js}'
   (ok)      0.58 ms CommonJSTest.check()
 ```
 
-> Quote your globs (`'./test/**/*.test.{ts,js}'`) so nole expands them itself
-> instead of relying on the shell — this keeps discovery consistent across
-> environments.
+## Watch mode
+
+```bash
+$ nole './test/**/*.test.ts' --watch
+```
+
+Every pass runs in a fresh child process, so changed modules are actually
+reloaded. A change while a run is in progress stops it and starts over.
+
+## Coverage
+
+`--coverage` runs the same command through the c8 you already have installed:
+
+```bash
+$ nole './test/**/*.test.ts' --coverage
+```

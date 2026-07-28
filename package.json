@@ -1,6 +1,6 @@
 {
   "name": "nole",
-  "version": "3.2.1",
+  "version": "3.3.0",
   "type": "module",
   "description": "Testing Library for Typescript projects",
   "main": "./dist/cjs/index.js",
@@ -25,7 +25,7 @@
     "build": "npm run build:esm && npm run build:cjs",
     "build:esm": "tsc",
     "build:cjs": "tsc -p tsconfig.cjs.json && node ./scripts/cjs-package.mjs",
-    "test": "node ./bin/nole.js './test/**/*.test.{ts,js}' './src/**/*.test.ts'",
+    "test": "node ./bin/nole.js './test/**/*.test.{ts,js}' './src/**/*.test.ts' -c 4",
     "coverage": "c8 node ./bin/nole.js './test/**/*.test.{ts,js}' './src/**/*.test.ts'"
   },
   "keywords": [

@@ -1,7 +1,14 @@
 import * as assert from "assert";
 import { Test } from "./index.js";
 import { addTest, getTest, skipClass, skipTest } from "./dynamic.js";
-import { ManualRun } from "./run.js";
+import { createRunContext, ManualRun } from "./run.js";
+import { createReporter } from "./reporter/index.js";
+
+// The failure cases below are supposed to fail, so they report into a context
+// that throws its output away instead of into the surrounding run.
+function silent() {
+  return createRunContext({ reporter: createReporter("json", () => {}) });
+}
 
 // These classes are not exported, so the outer runner ignores them. They are
 // driven directly through the src ManualRun pipeline below, which is what lets
@@ -110,7 +117,9 @@ class SkipTestInBefore extends Test() {
   spec() {}
 }
 
-export class PipelineTest extends Test() {
+// Drives its own ManualRun and shares the module level registry with the
+// other src tests, so it must not overlap with them.
+export class PipelineTest extends Test({ exclusive: true }) {
   async dynamicApi() {
     class NeverRegistered extends Test() {
       spec() {}
@@ -150,10 +159,16 @@ export class PipelineTest extends Test() {
       ]),
     );
 
-    // a throwing spec propagates out of the pipeline
-    await assert.rejects(() => ManualRun(new Set<any>([Failing])));
+    // a throwing spec is recorded, the run keeps going
+    const failing = await ManualRun(new Set<any>([Failing]), silent());
 
-    // skipTest inside a before hook is a usage error
-    await assert.rejects(() => ManualRun(new Set<any>([SkipTestInBefore])));
+    assert.equal(failing.failed, 1);
+    assert.equal(failing.specs[0].status, "failed");
+
+    // skipTest inside a before hook is a usage error, reported as a hook failure
+    const misuse = await ManualRun(new Set<any>([SkipTestInBefore]), silent());
+
+    assert.equal(misuse.failed, 1);
+    assert.ok(misuse.hooks.some((hook) => hook.status === "failed"));
   }
 }

@@ -7,6 +7,10 @@ export interface TestClassInfo {
   before?: () => Array<new () => BaseTest>;
   after?: () => Array<new () => BaseTest>;
   timeout?: number;
+  /** how many extra attempts a failing spec of this class gets */
+  retries?: number;
+  /** run this class on its own, even when --concurrency is higher than one */
+  exclusive?: boolean;
 }
 
 export class BaseTest {
@@ -29,12 +33,16 @@ export function Test<
   before,
   after,
   timeout,
+  retries,
+  exclusive,
 }: {
   dependencies?: Deps;
   skip?: string;
   before?: () => Array<new () => BaseTest>;
   after?: () => Array<new () => BaseTest>;
   timeout?: number;
+  retries?: number;
+  exclusive?: boolean;
 } = {}) {
   type Props = {
     [K in keyof Deps]: InstanceType<InferDependencyDefinition<Deps[K]>>;
@@ -77,6 +85,14 @@ export function Test<
 
     if (timeout !== undefined) {
       classInfo.timeout = timeout;
+    }
+
+    if (retries !== undefined) {
+      classInfo.retries = retries;
+    }
+
+    if (exclusive !== undefined) {
+      classInfo.exclusive = exclusive;
     }
 
     return classInfo;
