@@ -11,7 +11,7 @@ import {
   type ResolvedOptions,
   type SpecMatcher,
 } from "./config.js";
-import { createReporter, type Reporter } from "./reporter/index.js";
+import { resolveReporter, type Reporter } from "./reporter/index.js";
 import { summarize, type RunSummary } from "./results.js";
 import type { RunContext } from "./context.js";
 import { TimeDifference } from "./utils/time_difference.js";
@@ -44,7 +44,7 @@ export function createRunContext(
   const options = init.options ?? resolveOptions({});
   const reporter =
     init.reporter ??
-    createReporter(options.reporter, (chunk) => process.stdout.write(chunk));
+    resolveReporter(options.reporter, (chunk) => process.stdout.write(chunk));
 
   return {
     reporter,

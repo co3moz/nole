@@ -29,6 +29,8 @@ export class TestWrap {
   filtered = new Set<string>();
   /** why the rest of the class cannot run, set when a hook fails */
   blocked: string | null = null;
+  /** why the class stopped early although it is still healthy, see Test({ bail }) */
+  bailed: string | null = null;
   /** the whole class was filtered out, it never gets instantiated or run */
   excluded: boolean = false;
   /** dependency edges have already been built for this class */

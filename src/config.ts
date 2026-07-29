@@ -1,6 +1,14 @@
+import type { Reporter, Writer } from "./reporter/base.js";
+
 export const REPORTERS = ["spec", "dot", "json", "tap", "junit"] as const;
 
 export type ReporterName = (typeof REPORTERS)[number];
+
+/** Builds a reporter around the stream nole hands it. */
+export type ReporterFactory = (write: Writer) => Reporter;
+
+/** One of the built in names, a reporter of your own, or a factory for one. */
+export type ReporterOption = ReporterName | Reporter | ReporterFactory;
 
 export interface ReportTarget {
   name: ReporterName;
@@ -19,7 +27,7 @@ export interface NoleOptions {
   timeout?: number | null;
   retries?: number;
   concurrency?: number;
-  reporter?: ReporterName;
+  reporter?: ReporterOption;
   reports?: ReportTarget[];
   setup?: string[];
   wait?: number;
@@ -33,7 +41,7 @@ export interface ResolvedOptions {
   timeout: number | null;
   retries: number;
   concurrency: number;
-  reporter: ReporterName;
+  reporter: ReporterOption;
   reports: ReportTarget[];
   setup: string[];
   wait: number;
@@ -127,6 +135,11 @@ export function resolveOptions(
 
       (options as any)[key] = value;
     }
+  }
+
+  // a name from a config file deserves the same check the command line gets
+  if (typeof options.reporter === "string") {
+    options.reporter = parseReporter(options.reporter);
   }
 
   options.concurrency = Math.max(1, positive(options.concurrency, "--concurrency"));

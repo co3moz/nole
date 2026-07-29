@@ -326,6 +326,48 @@ export class LifecycleTest extends Test({ exclusive: true }) {
     );
   }
 
+  async classBailStopsTheClassOnly() {
+    class StopsAtTheFirstFailure extends Test({ bail: true }) {
+      boom() {
+        throw new Error("stop here");
+      }
+
+      never() {
+        assert.fail("must not run");
+      }
+
+      after() {
+        trace.push("after ran");
+      }
+
+      cleanUp() {
+        trace.push("cleanUp ran");
+      }
+    }
+
+    class Neighbour extends Test() {
+      works() {}
+    }
+
+    trace.length = 0;
+
+    const summary = await driveAll([StopsAtTheFirstFailure, Neighbour]);
+
+    assert.equal(summary.failed, 1);
+    assert.deepEqual(statuses(summary), [
+      "boom:failed",
+      "never:blocked",
+      "works:ok",
+    ]);
+
+    assert.equal(summary.aborted, false, "the run itself carries on");
+    assert.deepEqual(
+      trace,
+      ["after ran", "cleanUp ran"],
+      "the class is healthy, so its teardown still runs",
+    );
+  }
+
   async exclusiveClassesGetTheRunnerToThemselves() {
     const events: string[] = [];
 

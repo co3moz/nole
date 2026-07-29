@@ -11,7 +11,13 @@ export {
 } from "./dynamic.js";
 
 export { defineConfig, REPORTERS } from "./config.js";
-export type { NoleOptions, ReporterName, ResolvedOptions } from "./config.js";
+export type {
+  NoleOptions,
+  ReporterFactory,
+  ReporterName,
+  ReporterOption,
+  ResolvedOptions,
+} from "./config.js";
 
 export type {
   HookResult,
@@ -26,6 +32,7 @@ export {
   BufferedReporter,
   MultiReporter,
   createReporter,
+  resolveReporter,
 } from "./reporter/index.js";
 export type {
   Reporter,

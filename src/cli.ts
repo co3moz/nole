@@ -15,6 +15,7 @@ import { findConfigFile } from "./loader.js";
 import {
   createReporter,
   MultiReporter,
+  resolveReporter,
   type Reporter,
 } from "./reporter/index.js";
 import { abortActiveRuns, createRunContext, ManualRun } from "./run.js";
@@ -178,7 +179,7 @@ async function execute(
 
   const targets = options.reports.map((report) => new FileTarget(report.file));
   const reporters: Reporter[] = [
-    createReporter(options.reporter, (chunk) => process.stdout.write(chunk)),
+    resolveReporter(options.reporter, (chunk) => process.stdout.write(chunk)),
   ];
 
   options.reports.forEach((report, index) => {

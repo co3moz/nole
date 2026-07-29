@@ -26,8 +26,12 @@ export async function handleSpecs(test: TestWrap, ctx: RunContext) {
       continue;
     }
 
-    if (test.blocked) {
-      recordSpec(ctx, { ...base, status: "blocked", reason: test.blocked });
+    // blocked means a hook left the instance in an unknown state, bailed means
+    // the class asked to stop after its first failure; neither one runs specs
+    const halted = test.blocked ?? test.bailed;
+
+    if (halted) {
+      recordSpec(ctx, { ...base, status: "blocked", reason: halted });
       continue;
     }
 
@@ -179,6 +183,10 @@ export async function handleSpecs(test: TestWrap, ctx: RunContext) {
         attempts: attempt,
         error,
       });
+
+      if (test.config.bail) {
+        test.bailed = "an earlier spec of this class failed";
+      }
 
       await afterEach();
       stop = true;

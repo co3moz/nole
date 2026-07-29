@@ -85,6 +85,17 @@ export class ConfigTest extends Test() {
     });
 
     assert.throws(() => parseReportTarget("junit"), /--report expects/);
+
+    // a config file gets the same check the command line does
+    assert.throws(
+      () => resolveOptions({}, { reporter: "nope" as any }),
+      /Unknown reporter/,
+    );
+
+    // anything that is not a name is passed through untouched
+    const custom = () => ({}) as any;
+
+    assert.equal(resolveOptions({ reporter: custom }).reporter, custom);
   }
 
   matcher() {

@@ -1,4 +1,4 @@
-import type { ReporterName } from "../config.js";
+import type { ReporterName, ReporterOption } from "../config.js";
 import { type Reporter, type Writer } from "./base.js";
 import { SpecReporter } from "./spec.js";
 import { DotReporter } from "./dot.js";
@@ -18,6 +18,25 @@ export {
 } from "./base.js";
 
 export { SpecReporter, DotReporter, JsonReporter, TapReporter, JUnitReporter };
+
+/**
+ * Turns whatever the options carry into a reporter: a built in name, a reporter
+ * of your own, or a factory that is handed the output stream.
+ */
+export function resolveReporter(
+  option: ReporterOption,
+  write: Writer,
+): Reporter {
+  if (typeof option === "string") {
+    return createReporter(option, write);
+  }
+
+  if (typeof option === "function") {
+    return option(write);
+  }
+
+  return option;
+}
 
 export function createReporter(name: ReporterName, write: Writer): Reporter {
   switch (name) {

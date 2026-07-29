@@ -11,6 +11,8 @@ export interface TestClassInfo {
   retries?: number;
   /** run this class on its own, even when --concurrency is higher than one */
   exclusive?: boolean;
+  /** stop running this class after its first failing spec */
+  bail?: boolean;
 }
 
 export class BaseTest {
@@ -35,6 +37,7 @@ export function Test<
   timeout,
   retries,
   exclusive,
+  bail,
 }: {
   dependencies?: Deps;
   skip?: string;
@@ -43,6 +46,7 @@ export function Test<
   timeout?: number;
   retries?: number;
   exclusive?: boolean;
+  bail?: boolean;
 } = {}) {
   type Props = {
     [K in keyof Deps]: InstanceType<InferDependencyDefinition<Deps[K]>>;
@@ -93,6 +97,10 @@ export function Test<
 
     if (exclusive !== undefined) {
       classInfo.exclusive = exclusive;
+    }
+
+    if (bail !== undefined) {
+      classInfo.bail = bail;
     }
 
     return classInfo;

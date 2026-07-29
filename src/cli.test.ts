@@ -5,6 +5,7 @@ import * as path from "path";
 import { Test } from "./index.js";
 import { abortActiveRuns } from "./run.js";
 import { resolveOptions } from "./config.js";
+import { BaseReporter } from "./reporter/index.js";
 import {
   dropFlags,
   findBinary,
@@ -239,6 +240,37 @@ export class CliTest extends Test({ exclusive: true }) {
     assert.equal(code, 0);
     assert.ok(out.includes("CliConfigured.fromConfig"), out);
     assert.ok(this.loaded.includes("custom.config.ts"));
+  }
+
+  async usesAReporterFromTheConfigFile() {
+    const seen: string[] = [];
+    const config = path.join(this.root, "reporter.config.ts");
+
+    fs.writeFileSync(config, "");
+
+    class Recording extends BaseReporter {
+      specResult(result: any) {
+        seen.push(`${result.className}.${result.specName}:${result.status}`);
+      }
+    }
+
+    const { code, out } = await this._run(["--config", config], {
+      "reporter.config.ts": () => ({
+        default: {
+          globs: [this._glob("beta.test.ts")],
+          reporter: (write: any) => new Recording(write),
+        },
+      }),
+      "beta.test.ts": () => ({
+        CliCustomReported: class CliCustomReported extends Test() {
+          works() {}
+        },
+      }),
+    });
+
+    assert.equal(code, 0);
+    assert.deepEqual(seen, ["CliCustomReported.works:ok"]);
+    assert.equal(out, "", "the built in reporter is replaced, not added to");
   }
 
   async setupFilesRunFirst() {
